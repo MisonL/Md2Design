@@ -2,12 +2,15 @@ import { useState, useRef } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, Quote, Heading1, Heading2, Link, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, Quote, Heading1, Heading2, Link, Image as ImageIcon, Check } from 'lucide-react';
+import { htmlToMarkdown } from '../utils/turndown';
+import { paginateMarkdown } from '../utils/pagination';
 
 export const Editor = () => {
-  const { markdown, setMarkdown, addCardImage } = useStore();
+  const { markdown, setMarkdown, addCardImage, cardStyle } = useStore();
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
+  const [showPaginationToast, setShowPaginationToast] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,6 +77,9 @@ export const Editor = () => {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     const items = e.clipboardData.items;
+    let handled = false;
+
+    // 1. Handle Images
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
         e.preventDefault();
@@ -81,6 +87,80 @@ export const Editor = () => {
         if (file) handleImageUpload(file);
         return;
       }
+    }
+
+      const htmlData = e.clipboardData.getData('text/html');
+    const plainText = e.clipboardData.getData('text/plain');
+
+    // 2. Handle Feishu/HTML Content (Prioritize over plain text if it looks like a doc)
+    // We only convert if HTML is present and looks "rich" (simple check)
+    // But we also want to allow normal copy paste.
+    // Let's use turndown for HTML content if it's not just a single line of text or image.
+    if (htmlData && htmlData.trim().length > 0) {
+      try {
+        const convertedMd = htmlToMarkdown(htmlData);
+        
+        // If conversion result is valid and not empty
+        if (convertedMd && convertedMd.trim().length > 0) {
+             e.preventDefault();
+             insertText(convertedMd);
+             handled = true;
+             
+             // Check for pagination
+             const textarea = textareaRef.current;
+             const start = textarea?.selectionStart ?? 0;
+             const end = textarea?.selectionEnd ?? 0;
+             const newFullText = markdown.substring(0, start) + convertedMd + markdown.substring(end);
+             
+             // Auto-paginate if content is long
+             if (newFullText.length > 500) {
+                 const paginated = paginateMarkdown(newFullText, cardStyle);
+                 if (paginated !== newFullText) {
+                     setMarkdown(paginated);
+                     setShowPaginationToast(true);
+                     setTimeout(() => setShowPaginationToast(false), 4000);
+                 } else {
+                     setMarkdown(newFullText);
+                 }
+             } else {
+                 setMarkdown(newFullText);
+             }
+             return;
+        }
+      } catch (err) {
+        console.error("Failed to convert HTML to Markdown", err);
+      }
+    }
+
+    // 3. Handle Plain Text (if HTML failed or wasn't present)
+    // Also apply pagination check for long plain text
+    if (!handled && plainText) {
+        // If user pastes a local image file path string? No, browser handles files separately.
+        // Just standard text.
+        
+        // If it's a very short text, just let default behavior happen (it's faster/native)
+        // BUT we need to update state.
+        // Actually, for consistency and pagination check, let's handle it manually.
+        e.preventDefault();
+        insertText(plainText);
+        
+        const textarea = textareaRef.current;
+        const start = textarea?.selectionStart ?? 0;
+        const end = textarea?.selectionEnd ?? 0;
+        const newFullText = markdown.substring(0, start) + plainText + markdown.substring(end);
+        
+        if (newFullText.length > 500) {
+            const paginated = paginateMarkdown(newFullText, cardStyle);
+            if (paginated !== newFullText) {
+                setMarkdown(paginated);
+                setShowPaginationToast(true);
+                setTimeout(() => setShowPaginationToast(false), 4000);
+            } else {
+                setMarkdown(newFullText);
+            }
+        } else {
+             setMarkdown(newFullText);
+        }
     }
   };
 
@@ -162,8 +242,13 @@ export const Editor = () => {
               onPaste={handlePaste}
               placeholder="Type your markdown here..."
             />
-            <div className="p-3 border-t border-black/10 dark:border-white/10 text-xs text-center opacity-50">
-              {t.editorHint}
+            <div className="p-3 border-t border-black/10 dark:border-white/10 text-center space-y-1.5 bg-black/5 dark:bg-white/5">
+              <div className="text-sm font-bold text-blue-600 dark:text-blue-400 opacity-90">
+                {t.editorHint}
+              </div>
+              <div className="text-xs opacity-60">
+                {t.editorHint2}
+              </div>
             </div>
           </motion.div>
         ) : (
@@ -177,6 +262,32 @@ export const Editor = () => {
           >
             <ChevronRight size={24} />
           </motion.button>
+        )}
+      </AnimatePresence>
+      
+      {/* Pagination Toast */}
+      <AnimatePresence>
+        {showPaginationToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70] bg-black/80 dark:bg-white/90 text-white dark:text-black px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 backdrop-blur-md"
+          >
+            <div className="bg-green-500 rounded-full p-1">
+              <Check size={14} className="text-white" strokeWidth={3} />
+            </div>
+            <div className="flex flex-col">
+                <span className="text-sm font-bold">已自动分页</span>
+                <span className="text-[10px] opacity-80">内容过长，已按页面高度自动切割。可用 "---" 手动调整。</span>
+            </div>
+            <button 
+                onClick={() => setShowPaginationToast(false)}
+                className="ml-2 opacity-50 hover:opacity-100 p-1"
+            >
+                <ChevronLeft className="rotate-[-90deg]" size={14} />
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
