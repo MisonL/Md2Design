@@ -24,7 +24,6 @@ const estimateBlockHeight = (block: string, style: CardStyle, contentWidth: numb
 
   // List
   if (block.match(/^[-*] /) || block.match(/^\d+\. /)) {
-    const lines = block.split('\n').length;
     // Each list item might wrap
     const totalLines = block.split('\n').reduce((acc, line) => {
       const text = line.replace(/^[-*] |\d+\. /, '');
