@@ -71,6 +71,7 @@ const translations = {
     exportBtn: 'Export',
     exportSuccess: 'Export Successful',
     exportSuccessMsg: 'All images have been saved to your device.',
+    resetStyle: 'RESET',
   },
   zh: {
     title: 'Md2Design',
@@ -142,6 +143,7 @@ const translations = {
     exportBtn: '导出',
     exportSuccess: '导出成功',
     exportSuccessMsg: '所有图片已保存至您的设备。',
+    resetStyle: '重置样式',
   }
 };
 

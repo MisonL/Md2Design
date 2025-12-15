@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { motion } from 'framer-motion';
 import { Rnd } from 'react-rnd';
 import { Trash2, Move } from 'lucide-react';
@@ -66,7 +67,7 @@ export const Preview = () => {
 };
 
 const Card = ({ content, index }: { content: string, index: number }) => {
-  const { cardStyle, cardImages, updateCardImage, removeCardImage } = useStore();
+  const { cardStyle, cardImages, updateCardImage, removeCardImage, isResetting } = useStore();
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   
   // Calculate dimensions based on settings
@@ -155,13 +156,13 @@ const Card = ({ content, index }: { content: string, index: number }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="relative shadow-2xl overflow-hidden flex flex-col flex-shrink-0 group"
+      className={`relative shadow-2xl overflow-hidden flex flex-col flex-shrink-0 group ${isResetting ? 'transition-all duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]' : ''}`}
       style={outerStyle}
       id={`card-${index}`}
       onClick={() => setSelectedImageId(null)} // Deselect image when clicking card background
     >
       <div 
-        className="relative w-full h-full flex flex-col overflow-hidden"
+        className={`relative w-full h-full flex flex-col overflow-hidden ${isResetting ? 'transition-all duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]' : ''}`}
         style={innerStyle}
       >
         {/* Background gradients or patterns based on template */}
@@ -231,13 +232,22 @@ const Card = ({ content, index }: { content: string, index: number }) => {
         <div className="relative z-10 h-full flex flex-col pointer-events-none">
           <div className="prose prose-sm max-w-none flex-1 pointer-events-auto p-8 overflow-hidden">
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
                   h1: ({...props}) => <h1 style={{color: cardStyle.textColor}} className="text-3xl font-bold mb-4" {...props} />,
                   h2: ({...props}) => <h2 style={{color: cardStyle.textColor}} className="text-2xl font-bold mb-3 mt-6" {...props} />,
                   p: ({...props}) => (
                     <p style={{color: cardStyle.textColor}} className="mb-4 leading-relaxed opacity-90" {...props} />
                   ),
-                  li: ({...props}) => <li style={{color: cardStyle.textColor}} className="mb-2 list-disc list-inside" {...props} />,
+                  ul: ({...props}) => <ul style={{color: cardStyle.textColor}} className="mb-4 list-disc list-outside pl-5 space-y-1" {...props} />,
+                  ol: ({...props}) => <ol style={{color: cardStyle.textColor}} className="mb-4 list-decimal list-outside pl-5 space-y-1" {...props} />,
+                  li: ({...props}) => <li className="pl-1 marker:opacity-70 [&>p]:mb-2" {...props} />,
+                  table: ({...props}) => <div className="overflow-x-auto mb-6 rounded-lg border border-current opacity-90"><table className="w-full text-left text-sm border-collapse" {...props} /></div>,
+                  thead: ({...props}) => <thead className="bg-black/5 dark:bg-white/10 font-semibold" {...props} />,
+                  tbody: ({...props}) => <tbody className="divide-y divide-current/10" {...props} />,
+                  tr: ({...props}) => <tr className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors" {...props} />,
+                  th: ({...props}) => <th className="p-3 border-b border-current/20 whitespace-nowrap" {...props} />,
+                  td: ({...props}) => <td className="p-3 border-b border-current/10" {...props} />,
                   pre: ({children}) => <>{children}</>,
                   blockquote: ({...props}) => (
                     <blockquote 

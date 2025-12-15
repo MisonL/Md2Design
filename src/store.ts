@@ -109,7 +109,11 @@ interface AppState {
   
   cardStyle: CardStyle;
   updateCardStyle: (style: Partial<CardStyle>) => void;
+  resetCardStyle: () => void;
   addCustomFont: (font: CustomFont) => void;
+
+  isResetting: boolean;
+  setIsResetting: (isResetting: boolean) => void;
 }
 
 const DEFAULT_MARKDOWN_EN = `# There should be a title
@@ -147,6 +151,54 @@ console.log('代码块也能完美显示！');
 - 功能 1
 - 功能 2
 - 功能 3`;
+
+const INITIAL_CARD_STYLE: CardStyle = {
+  fontFamily: 'Inter',
+  backgroundColor: '#ffffff',
+  textColor: '#000000',
+  accentColor: '#3b82f6',
+  aspectRatio: '4:3',
+  orientation: 'portrait',
+  width: 800,
+  height: 600,
+  borderRadius: 24,
+  borderWidth: 0,
+  borderColor: '#000000',
+  enableBackground: false,
+  backgroundType: 'gradient',
+  backgroundValue: 'linear-gradient(135deg, #d4dcdd 0%, #94b1cc 100%)',
+  gradientStart: '#d4dcdd',
+  gradientEnd: '#94b1cc',
+  gradientAngle: 135,
+  padding: 40,
+  customCSS: '',
+  template: 'default',
+  fontSize: 16,
+  customFonts: [],
+  blockquoteBackgroundColor: '#00000010',
+  blockquoteBorderColor: '#3b82f6',
+  codeBackgroundColor: '#00000010',
+  shadowEnabled: true,
+  shadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+  shadowConfig: {
+    x: 0,
+    y: 25,
+    blur: 5,
+    spread: 0,
+    color: '#000000',
+    opacity: 0.25
+  },
+  watermark: {
+    enabled: false,
+    content: 'Md2Design',
+    position: 'center',
+    opacity: 0.1
+  },
+  pageNumber: {
+    enabled: false,
+    position: 'center'
+  }
+};
 
 export const useStore = create<AppState>()(
   temporal(
@@ -232,53 +284,7 @@ export const useStore = create<AppState>()(
     };
   }),
 
-  cardStyle: {
-    fontFamily: 'Inter',
-    backgroundColor: '#ffffff',
-    textColor: '#000000',
-    accentColor: '#3b82f6',
-    aspectRatio: '4:3',
-    orientation: 'portrait',
-    width: 800,
-    height: 600,
-    borderRadius: 24,
-    borderWidth: 0,
-    borderColor: '#000000',
-    enableBackground: false,
-    backgroundType: 'gradient',
-    backgroundValue: 'linear-gradient(135deg, #d4dcdd 0%, #94b1cc 100%)',
-    gradientStart: '#d4dcdd',
-    gradientEnd: '#94b1cc',
-    gradientAngle: 135,
-    padding: 40,
-    customCSS: '',
-    template: 'default',
-    fontSize: 16,
-    customFonts: [],
-    blockquoteBackgroundColor: '#00000010', // 10% opacity black
-    blockquoteBorderColor: '#3b82f6', // same as accentColor default
-    codeBackgroundColor: '#00000010', // 10% opacity black
-    shadowEnabled: true,
-    shadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // default shadow-2xl equivalent
-    shadowConfig: {
-      x: 0,
-      y: 25,
-      blur: 5,
-      spread: 0,
-      color: '#000000',
-      opacity: 0.25
-    },
-    watermark: {
-      enabled: false,
-      content: 'Md2Design',
-      position: 'center',
-      opacity: 0.1
-    },
-    pageNumber: {
-      enabled: false,
-      position: 'center'
-    }
-  },
+  cardStyle: INITIAL_CARD_STYLE,
   updateCardStyle: (style) => set((state) => {
     // If updating shadow config, recompute shadow string
     let newStyle = { ...style };
@@ -318,12 +324,16 @@ export const useStore = create<AppState>()(
       cardStyle: { ...state.cardStyle, ...newStyle }
     };
   }),
+  resetCardStyle: () => set({ cardStyle: INITIAL_CARD_STYLE }),
   addCustomFont: (font) => set((state) => ({
     cardStyle: {
       ...state.cardStyle,
       customFonts: [...state.cardStyle.customFonts, font]
     }
   })),
+
+  isResetting: false,
+  setIsResetting: (isResetting) => set({ isResetting }),
     }),
     {
       // Configure Zundo: only track changes to markdown and cardImages

@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
 import type { CardStyle } from '../store';
-import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon } from 'lucide-react';
+import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Sidebar = () => {
-  const { cardStyle, updateCardStyle, addCustomFont } = useStore();
+  const { cardStyle, updateCardStyle, addCustomFont, resetCardStyle, setIsResetting } = useStore();
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
+  const [showResetToast, setShowResetToast] = useState(false);
 
   const handleColorChange = (key: keyof CardStyle, value: string) => {
     updateCardStyle({ [key]: value });
@@ -26,10 +27,25 @@ export const Sidebar = () => {
 
   const RatioIcon = ({ ratio }: { ratio: string }) => {
     if (ratio === 'custom') return <Layout size={14} className="opacity-70" />;
-    const [w, h] = ratio.split(':').map(Number);
-    // Base width 14px
-    const width = 14;
-    const height = width * (h / w);
+    let [w, h] = ratio.split(':').map(Number);
+    
+    // Swap if portrait to match visual expectation
+    if (cardStyle.orientation === 'portrait') {
+      [w, h] = [h, w];
+    }
+
+    // Fit within 14x14 box
+    const maxDim = 14;
+    let width, height;
+    
+    if (w >= h) {
+        width = maxDim;
+        height = width * (h / w);
+    } else {
+        height = maxDim;
+        width = height * (w / h);
+    }
+
     return (
       <div 
         className="border border-current opacity-70 mb-1"
@@ -54,12 +70,28 @@ export const Sidebar = () => {
                 <Palette size={16} />
                 <span>{t.styleSettings}</span>
               </div>
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
-              >
-                <ChevronRight size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    setIsResetting(true);
+                    resetCardStyle();
+                    setShowResetToast(true);
+                    setTimeout(() => setShowResetToast(false), 2000);
+                    setTimeout(() => setIsResetting(false), 1000);
+                  }}
+                  className="px-2 py-1 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center gap-1.5 transition-transform active:scale-95 shadow-lg hover:opacity-90"
+                  title={t.resetStyle}
+                >
+                  <span className="text-[10px] font-bold tracking-wider">{t.resetStyle}</span>
+                  <RotateCcw size={10} strokeWidth={3} />
+                </button>
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -89,7 +121,13 @@ export const Sidebar = () => {
 
                 {/* Aspect Ratio */}
                 <div className="grid grid-cols-5 gap-2 mb-4">
-                  {ASPECT_RATIOS.map((ratio) => (
+                  {ASPECT_RATIOS.map((ratio) => {
+                     const isPortrait = cardStyle.orientation === 'portrait';
+                     const displayLabel = isPortrait && ratio.value !== 'custom'
+                        ? ratio.value.split(':').reverse().join(':')
+                        : ratio.label;
+
+                     return (
                      <button
                        key={ratio.value}
                        onClick={() => updateCardStyle({ aspectRatio: ratio.value })}
@@ -100,9 +138,9 @@ export const Sidebar = () => {
                        }`}
                      >
                        <RatioIcon ratio={ratio.value} />
-                       {ratio.label}
+                       {displayLabel}
                      </button>
-                  ))}
+                  )})}
                 </div>
 
                 {/* Custom Dimensions */}
@@ -788,6 +826,24 @@ export const Sidebar = () => {
           >
             <ChevronLeft size={24} />
           </motion.button>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showResetToast && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
+          >
+            <div className="bg-white/30 dark:bg-black/30 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl rounded-2xl px-8 py-6 flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center">
+                <RotateCcw size={24} className="text-black dark:text-white" />
+              </div>
+              <span className="text-sm font-bold text-black dark:text-white tracking-wide">已重置样式</span>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
