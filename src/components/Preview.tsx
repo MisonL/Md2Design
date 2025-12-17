@@ -237,7 +237,7 @@ const Card = ({ content, index }: { content: string, index: number }) => {
                   h1: ({...props}) => (
                     <div className="flex flex-col items-center mb-8 first:mt-0 mt-8">
                       <h1 style={{color: cardStyle.h1Color || cardStyle.textColor}} className="text-3xl font-bold mb-2 text-center" {...props} />
-                      <div className="h-1 w-24 rounded-full" style={{backgroundColor: cardStyle.accentColor}} />
+                      <div className="h-1 w-24 rounded-full" style={{backgroundColor: cardStyle.h1LineColor || cardStyle.accentColor}} />
                     </div>
                   ),
                   h2: ({...props}) => (
@@ -256,7 +256,7 @@ const Card = ({ content, index }: { content: string, index: number }) => {
                     <h3 
                       style={{
                         color: cardStyle.h3Color || cardStyle.textColor,
-                        borderLeftColor: cardStyle.accentColor
+                        borderLeftColor: cardStyle.h3LineColor || cardStyle.accentColor
                       }} 
                       className="text-xl font-bold mb-4 mt-6 first:mt-0 pl-3 border-l-4" 
                       {...props} 
