@@ -59,6 +59,12 @@ export type CardStyle = {
   blockquoteBorderColor: string;
   codeBackgroundColor: string;
   
+  // Header Colors (Optional overrides, defaults to accent/text color logic)
+  h1Color: string;
+  h2Color: string; // Text color for H2
+  h2BackgroundColor: string; // Background for H2 pill
+  h3Color: string;
+
   // Shadow
   shadowEnabled: boolean;
   shadow: string; // Computed
@@ -178,6 +184,10 @@ const INITIAL_CARD_STYLE: CardStyle = {
   blockquoteBackgroundColor: '#00000010',
   blockquoteBorderColor: '#3b82f6',
   codeBackgroundColor: '#00000010',
+  h1Color: '#000000',
+  h2Color: '#ffffff',
+  h2BackgroundColor: '#3b82f6',
+  h3Color: '#000000',
   shadowEnabled: true,
   shadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
   shadowConfig: {

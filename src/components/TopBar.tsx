@@ -90,14 +90,55 @@ export const TopBar = () => {
 
         // Helper to generate blob
         const generateBlob = async (card: HTMLElement) => {
-            let dataUrl;
-            if (format === 'png') {
-                dataUrl = await toPng(card, options);
-            } else {
-                dataUrl = await toJpeg(card, { ...options, quality: 0.9 });
+            // Pre-process images to Base64 to avoid html-to-image caching/cloning bugs
+            // This is critical for fixing the "all images look like the first one" bug.
+            const images = Array.from(card.querySelectorAll('img'));
+            const originalSrcs = new Map<HTMLImageElement, string>();
+
+            try {
+                await Promise.all(images.map(async (img) => {
+                    const src = img.src;
+                    if (src.startsWith('data:')) return; // Already base64
+
+                    try {
+                        // Keep track to restore later
+                        originalSrcs.set(img, src);
+                        
+                        // Fetch and convert
+                        const response = await fetch(src);
+                        const blob = await response.blob();
+                        const base64 = await new Promise<string>((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result as string);
+                            reader.readAsDataURL(blob);
+                        });
+                        
+                        img.src = base64;
+                    } catch (e) {
+                        console.warn('Failed to inline image:', src, e);
+                    }
+                }));
+
+                let dataUrl;
+                const currentOptions = { 
+                    ...options, 
+                    useCORS: true,
+                    skipAutoScale: true
+                };
+
+                if (format === 'png') {
+                    dataUrl = await toPng(card, currentOptions);
+                } else {
+                    dataUrl = await toJpeg(card, { ...currentOptions, quality: 0.9 });
+                }
+                const res = await fetch(dataUrl);
+                return await res.blob();
+            } finally {
+                // Restore original src to not break the DOM
+                originalSrcs.forEach((src, img) => {
+                    img.src = src;
+                });
             }
-            const res = await fetch(dataUrl);
-            return await res.blob();
         };
 
         if (exportMode === 'multiple') {

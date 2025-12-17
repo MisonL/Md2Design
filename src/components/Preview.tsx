@@ -234,10 +234,36 @@ const Card = ({ content, index }: { content: string, index: number }) => {
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                  h1: ({...props}) => <h1 style={{color: cardStyle.textColor}} className="text-3xl font-bold mb-4" {...props} />,
-                  h2: ({...props}) => <h2 style={{color: cardStyle.textColor}} className="text-2xl font-bold mb-3 mt-6" {...props} />,
+                  h1: ({...props}) => (
+                    <div className="flex flex-col items-center mb-8 first:mt-0 mt-8">
+                      <h1 style={{color: cardStyle.h1Color || cardStyle.textColor}} className="text-3xl font-bold mb-2 text-center" {...props} />
+                      <div className="h-1 w-24 rounded-full" style={{backgroundColor: cardStyle.accentColor}} />
+                    </div>
+                  ),
+                  h2: ({...props}) => (
+                    <div className="flex justify-center mb-6 mt-8 first:mt-0">
+                      <h2 
+                        style={{
+                          backgroundColor: cardStyle.h2BackgroundColor || cardStyle.accentColor, 
+                          color: cardStyle.h2Color || '#fff'
+                        }} 
+                        className="text-lg font-bold px-4 py-1.5 shadow-md rounded-lg" 
+                        {...props} 
+                      />
+                    </div>
+                  ),
+                  h3: ({...props}) => (
+                    <h3 
+                      style={{
+                        color: cardStyle.h3Color || cardStyle.textColor,
+                        borderLeftColor: cardStyle.accentColor
+                      }} 
+                      className="text-xl font-bold mb-4 mt-6 first:mt-0 pl-3 border-l-4" 
+                      {...props} 
+                    />
+                  ),
                   p: ({...props}) => (
-                    <p style={{color: cardStyle.textColor}} className="mb-4 leading-relaxed opacity-90" {...props} />
+                    <p style={{color: cardStyle.textColor}} className="mb-4 leading-relaxed opacity-90 first:mt-0" {...props} />
                   ),
                   ul: ({...props}) => <ul style={{color: cardStyle.textColor}} className="mb-4 list-disc list-outside pl-5 space-y-1" {...props} />,
                   ol: ({...props}) => <ol style={{color: cardStyle.textColor}} className="mb-4 list-decimal list-outside pl-5 space-y-1" {...props} />,
@@ -283,6 +309,8 @@ const Card = ({ content, index }: { content: string, index: number }) => {
                       <img 
                         src={cleanSrc} 
                         alt={alt} 
+                        crossOrigin="anonymous"
+                        className="markdown-image"
                         style={{ 
                           display: 'block',
                           maxWidth: '100%', 

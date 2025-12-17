@@ -544,6 +544,66 @@ export const Sidebar = () => {
                     </div>
                   </div>
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs opacity-70">{t.h1Color}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
+                      <input 
+                        type="color" 
+                        value={cardStyle.h1Color || '#000000'}
+                        onChange={(e) => handleColorChange('h1Color', e.target.value)}
+                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
+                      />
+                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h1Color || '#000000' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs opacity-70">{t.h2Color}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
+                      <input 
+                        type="color" 
+                        value={cardStyle.h2Color || '#ffffff'}
+                        onChange={(e) => handleColorChange('h2Color', e.target.value)}
+                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
+                      />
+                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h2Color || '#ffffff' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs opacity-70">{t.h2BgColor}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
+                      <input 
+                        type="color" 
+                        value={cardStyle.h2BackgroundColor || '#3b82f6'}
+                        onChange={(e) => handleColorChange('h2BackgroundColor', e.target.value)}
+                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
+                      />
+                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h2BackgroundColor || '#3b82f6' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs opacity-70">{t.h3Color}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
+                      <input 
+                        type="color" 
+                        value={cardStyle.h3Color || '#000000'}
+                        onChange={(e) => handleColorChange('h3Color', e.target.value)}
+                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
+                      />
+                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h3Color || '#000000' }} />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Typography */}
