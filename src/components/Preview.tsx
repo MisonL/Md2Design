@@ -81,19 +81,11 @@ const Card = ({ content, index }: { content: string, index: number }) => {
     // Determine dimensions based on orientation and aspect ratio
     if (cardStyle.orientation === 'portrait') {
       width = baseSize;
-      height = width * (h / w); // Height is proportional to aspect ratio inverted for portrait? No, standard portrait is 9:16 usually
-      // Wait, 16:9 in Portrait means Width 9, Height 16.
-      // If user selects 16:9 and Portrait, it usually means 9:16 vertical video.
-      // Let's interpret the Ratio as "Shape". 
-      // 16:9 Landscape = 16 wide, 9 high.
-      // 16:9 Portrait = 9 wide, 16 high.
-      
-      // Let's just swap dimensions if portrait
+      height = width * (h / w); 
+      // Swap dimensions if portrait to ensure vertical orientation
       if (w > h) {
-         // Landscape ratio, but portrait mode -> Swap
          height = width * (w / h);
       } else {
-         // Already portrait ratio (e.g. 9:16)
          height = width * (h / w);
       }
     } else {
@@ -102,21 +94,16 @@ const Card = ({ content, index }: { content: string, index: number }) => {
       if (w > h) {
         height = width * (h / w);
       } else {
-        // Portrait ratio in Landscape mode? usually doesn't happen for standard ratios like 16:9.
-        // If 16:9 selected, w=16, h=9. height = width * 9/16. Correct.
         height = width * (h / w);
       }
     }
     
-    // Simplification:
-    // Aspect Ratio 16:9 means W:H = 16:9.
-    // If Orientation is Portrait, we flip it to 9:16.
-    
+    // Simplification logic for calculation consistency
     let ratio = w / h;
     if (cardStyle.orientation === 'portrait') {
-        if (ratio > 1) ratio = 1 / ratio; // Flip to < 1
+        if (ratio > 1) ratio = 1 / ratio; 
     } else {
-        if (ratio < 1) ratio = 1 / ratio; // Flip to > 1
+        if (ratio < 1) ratio = 1 / ratio; 
     }
     
     width = baseSize;
@@ -128,21 +115,19 @@ const Card = ({ content, index }: { content: string, index: number }) => {
     width: `${width}px`,
     height: `${height}px`,
     padding: cardStyle.enableBackground ? `${cardStyle.padding}px` : '0',
-    background: cardStyle.enableBackground 
-      ? (cardStyle.backgroundType === 'solid' ? cardStyle.backgroundValue : cardStyle.backgroundValue) 
-      : 'transparent',
+    background: 'transparent', // Handled by separate layer
   };
 
   const innerStyle = {
     fontFamily: cardStyle.fontFamily,
-    backgroundColor: cardStyle.backgroundColor,
+    backgroundColor: 'transparent', // Handled by separate layer
     color: cardStyle.textColor,
     fontSize: `${cardStyle.fontSize}px`,
     borderRadius: `${cardStyle.borderRadius}px`,
     borderWidth: `${cardStyle.borderWidth}px`,
     borderColor: cardStyle.borderColor,
     boxShadow: cardStyle.shadow,
-    padding: '2rem', // Fixed padding for content (removed to allow flexible layout)
+    padding: '2rem',
     paddingTop: 0,
     paddingBottom: 0,
     paddingLeft: 0,
@@ -150,6 +135,62 @@ const Card = ({ content, index }: { content: string, index: number }) => {
   };
 
   const images = cardImages[index] || [];
+
+  const renderOuterBackground = () => {
+    if (!cardStyle.enableBackground) return null;
+    
+    if (cardStyle.backgroundType === 'image' && cardStyle.backgroundImage) {
+        return (
+          <div className="absolute inset-0 overflow-hidden -z-10 rounded-none pointer-events-none">
+             <div 
+               style={{
+                 width: '100%',
+                 height: '100%',
+                 backgroundImage: `url(${cardStyle.backgroundImage})`,
+                 backgroundPosition: 'center',
+                 backgroundSize: 'cover',
+                 transform: `translate(${cardStyle.backgroundConfig.x}px, ${cardStyle.backgroundConfig.y}px) scale(${cardStyle.backgroundConfig.scale})`,
+                 filter: `blur(${cardStyle.backgroundConfig.blur}px)`
+               }}
+             />
+          </div>
+        );
+    } else if (cardStyle.backgroundType === 'gradient') {
+        return <div className="absolute inset-0 -z-10 pointer-events-none" style={{ background: cardStyle.backgroundValue }} />;
+    } else {
+        // Solid
+        return <div className="absolute inset-0 -z-10 pointer-events-none" style={{ background: cardStyle.backgroundValue }} />;
+    }
+  };
+
+  const renderInnerBackground = () => {
+     const type = cardStyle.cardBackgroundType || 'solid';
+     const innerRadius = Math.max(0, cardStyle.borderRadius - cardStyle.borderWidth);
+     const radiusStyle = { borderRadius: `${innerRadius}px` };
+     
+     if (type === 'image' && cardStyle.cardBackgroundImage) {
+        return (
+          <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none" style={radiusStyle}>
+             <div 
+               style={{
+                 width: '100%',
+                 height: '100%',
+                 backgroundImage: `url(${cardStyle.cardBackgroundImage})`,
+                 backgroundPosition: 'center',
+                 backgroundSize: 'cover',
+                 transform: `translate(${cardStyle.cardBackgroundConfig.x}px, ${cardStyle.cardBackgroundConfig.y}px) scale(${cardStyle.cardBackgroundConfig.scale})`,
+                 filter: `blur(${cardStyle.cardBackgroundConfig.blur}px)`
+               }}
+             />
+          </div>
+        );
+     } else if (type === 'gradient') {
+        return <div className="absolute inset-0 -z-10 pointer-events-none" style={{ ...radiusStyle, background: cardStyle.cardGradientValue }} />;
+     } else {
+        // Solid (default)
+        return <div className="absolute inset-0 -z-10 pointer-events-none bg-current" style={{ ...radiusStyle, color: cardStyle.backgroundColor }} />;
+     }
+  };
 
   return (
     <motion.div
@@ -161,11 +202,18 @@ const Card = ({ content, index }: { content: string, index: number }) => {
       id={`card-${index}`}
       onClick={() => setSelectedImageId(null)} // Deselect image when clicking card background
     >
+      {renderOuterBackground()}
+
       <div 
         className={`relative w-full h-full flex flex-col overflow-hidden ${isResetting ? 'transition-all duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]' : ''}`}
         style={innerStyle}
       >
-        {/* Background gradients or patterns based on template */}
+        {renderInnerBackground()}
+
+        {/* Background gradients or patterns based on template (only if no custom image/gradient is set, or as overlay?) 
+            Actually, let's keep it but make it subtle or remove if custom bg is set?
+            Default template effect:
+        */}
         {cardStyle.template === 'default' && (
            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-400 to-orange-300 blur-3xl opacity-20 -z-0 pointer-events-none" />
         )}
@@ -192,7 +240,7 @@ const Card = ({ content, index }: { content: string, index: number }) => {
               e.stopPropagation();
               setSelectedImageId(img.id);
             }}
-            data-html2canvas-ignore={selectedImageId === img.id ? undefined : undefined} // Not needed as we filter class in TopBar
+            data-html2canvas-ignore={selectedImageId === img.id ? undefined : undefined} 
           >
             <div className="relative w-full h-full group/img">
                <img 
@@ -213,7 +261,6 @@ const Card = ({ content, index }: { content: string, index: number }) => {
                     >
                       <Move size={14} />
                     </button>
-                    {/* Future: Add Crop Mode toggle here */}
                     <button 
                       className="p-1 hover:bg-red-500/80 rounded text-red-300"
                       onClick={(e) => {
@@ -286,25 +333,17 @@ const Card = ({ content, index }: { content: string, index: number }) => {
                     />
                   ),
                   a: ({...props}) => <a style={{color: cardStyle.accentColor}} className="underline decoration-auto underline-offset-2" {...props} />,
-                  // Removed standard image rendering since we use object layer now, 
-                  // but kept for compatibility with existing markdown images if user wants inline
                   img: ({ src, alt, ...props }: { src?: string; alt?: string }) => {
-                     // Handle spacer syntax for layout
                      if (src === 'spacer') {
                        return <div className="w-full" style={{ height: '200px' }} />;
                      }
-                     
-                     // Fallback for standard images
-                     // Check if URL has hash for sizing (e.g. #width=50%)
                      let width: string | undefined;
                      let cleanSrc = src;
-                     
                      if (src && src.includes('#width=')) {
                        const parts = src.split('#width=');
                        cleanSrc = parts[0];
                        width = parts[1];
                      }
- 
                      return (
                       <img 
                         src={cleanSrc} 

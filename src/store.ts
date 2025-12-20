@@ -39,12 +39,20 @@ export type CardStyle = {
 
   // Background Fill
   enableBackground: boolean;
-  backgroundType: 'solid' | 'gradient';
+  backgroundType: 'solid' | 'gradient' | 'image';
   backgroundValue: string;
   // Gradient state for UI controls
   gradientStart: string;
   gradientEnd: string;
   gradientAngle: number;
+  // Image state
+  backgroundImage: string;
+  backgroundConfig: {
+    x: number;
+    y: number;
+    scale: number;
+    blur: number;
+  };
   
   padding: number;
 
@@ -55,6 +63,20 @@ export type CardStyle = {
   customFonts: CustomFont[];
 
   // Element Specific Styles
+  // Card Background (Inner)
+  cardBackgroundType: 'solid' | 'gradient' | 'image';
+  cardGradientStart: string;
+  cardGradientEnd: string;
+  cardGradientAngle: number;
+  cardGradientValue: string;
+  cardBackgroundImage: string;
+  cardBackgroundConfig: {
+    x: number;
+    y: number;
+    scale: number;
+    blur: number;
+  };
+
   blockquoteBackgroundColor: string;
   blockquoteBorderColor: string;
   codeBackgroundColor: string;
@@ -178,11 +200,30 @@ const INITIAL_CARD_STYLE: CardStyle = {
   gradientStart: '#d4dcdd',
   gradientEnd: '#94b1cc',
   gradientAngle: 135,
+  backgroundImage: '',
+  backgroundConfig: {
+    x: 0,
+    y: 0,
+    scale: 1,
+    blur: 0
+  },
   padding: 40,
   customCSS: '',
   template: 'default',
   fontSize: 16,
   customFonts: [],
+  cardBackgroundType: 'solid',
+  cardGradientStart: '#ffffff',
+  cardGradientEnd: '#f0f0f0',
+  cardGradientAngle: 135,
+  cardGradientValue: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)',
+  cardBackgroundImage: '',
+  cardBackgroundConfig: {
+    x: 0,
+    y: 0,
+    scale: 1,
+    blur: 0
+  },
   blockquoteBackgroundColor: '#00000010',
   blockquoteBorderColor: '#3b82f6',
   codeBackgroundColor: '#00000010',

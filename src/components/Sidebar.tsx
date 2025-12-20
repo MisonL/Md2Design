@@ -1,9 +1,176 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
 import type { CardStyle } from '../store';
-import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw, Stamp, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { HexColorPicker } from 'react-colorful';
+
+const SliderControl = ({ label, value, min, max, step = 1, onChange }: { label: string, value: number, min: number, max: number, step?: number, onChange: (val: number) => void }) => {
+  const cleanLabel = label.replace(/\s*\(px\)/i, '').replace(/\s*\(°\)/i, '');
+  
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-xs font-medium opacity-70 block">{cleanLabel}</label>
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-bold opacity-90 min-w-[2ch] text-right font-mono">{value}</span>
+          {label.includes('(px)') && <span className="text-[10px] opacity-40 font-mono">px</span>}
+          {label.includes('(°)') && <span className="text-[10px] opacity-40 font-mono">°</span>}
+        </div>
+      </div>
+      <input 
+        type="range" 
+        min={min} 
+        max={max} 
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full accent-black/80 dark:accent-white/80 h-1.5 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer"
+      />
+    </div>
+  );
+};
+
+const ColorPicker = ({ color, onChange, label }: { color: string, onChange: (color: string) => void, label?: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+
+  const updatePosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const popoverWidth = 240; // Approx width of our popover
+      const popoverHeight = 240; // Approx height
+      
+      let top = rect.bottom + 8;
+      let left = rect.right - popoverWidth;
+
+      // Check if it goes off screen bottom
+      if (top + popoverHeight > window.innerHeight) {
+        top = rect.top - popoverHeight - 8;
+      }
+
+      // Check if it goes off screen left
+      if (left < 10) {
+        left = 10;
+      }
+
+      setCoords({ top, left });
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (isOpen) {
+      updatePosition();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleScroll = () => {
+      if (isOpen) {
+        // If the scroll happened in a parent of the button, update position
+        updatePosition();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', updatePosition);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="relative">
+      <div className="flex flex-col gap-2">
+        {label && <span className="text-xs opacity-70">{label}</span>}
+        <div className="flex items-center gap-2 w-full">
+          <div className="relative flex-1">
+            <input 
+              type="text" 
+              value={color.toUpperCase()} 
+              onChange={(e) => onChange(e.target.value)}
+              className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded px-2 py-1.5 text-[10px] font-mono focus:outline-none focus:border-black/30 dark:focus:border-white/30 text-center"
+            />
+          </div>
+          <button 
+            ref={buttonRef}
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-7 h-7 rounded-full border border-black/20 dark:border-white/20 shadow-sm relative overflow-hidden transition-transform active:scale-95 flex-shrink-0"
+            style={{ backgroundColor: color }}
+          />
+        </div>
+      </div>
+      
+      {isOpen && createPortal(
+        <div 
+          ref={popoverRef} 
+          className="fixed z-[9999] p-3 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-black/10 dark:border-white/10"
+          style={{ 
+            top: coords.top, 
+            left: coords.left,
+            width: 'fit-content'
+          }}
+        >
+          <HexColorPicker color={color} onChange={onChange} />
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
+const RatioIcon = ({ ratio, orientation }: { ratio: string, orientation: 'portrait' | 'landscape' }) => {
+  if (ratio === 'custom') return <Layout size={14} className="opacity-70" />;
+  let [w, h] = ratio.split(':').map(Number);
+  
+  // Swap if portrait to match visual expectation
+  if (orientation === 'portrait') {
+    [w, h] = [h, w];
+  }
+
+  // Fit within 14x14 box
+  const maxDim = 14;
+  let width, height;
+  
+  if (w >= h) {
+      width = maxDim;
+      height = width * (h / w);
+  } else {
+      height = maxDim;
+      width = height * (w / h);
+  }
+
+  // Force visual difference for 4:3 vs 3:2 in portrait if they are too similar
+  return (
+    <div 
+      className="border border-current opacity-70 mb-1"
+      style={{ width: `${width}px`, height: `${height}px` }}
+    />
+  );
+};
+
+const ColorSectionWrapper = ({ children, label }: { children: React.ReactNode, label?: string }) => (
+  <div className="p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 space-y-3">
+     {label && <label className="text-xs font-medium opacity-70 block mb-2">{label}</label>}
+     {children}
+  </div>
+);
 
 export const Sidebar = () => {
   const { cardStyle, updateCardStyle, addCustomFont, resetCardStyle, setIsResetting } = useStore();
@@ -15,8 +182,6 @@ export const Sidebar = () => {
     updateCardStyle({ [key]: value });
   };
 
-  
-
   const ASPECT_RATIOS = [
     { label: '1:1', value: '1:1' },
     { label: '4:3', value: '4:3' },
@@ -25,33 +190,23 @@ export const Sidebar = () => {
     { label: 'Custom', value: 'custom' },
   ] as const;
 
-  const RatioIcon = ({ ratio }: { ratio: string }) => {
-    if (ratio === 'custom') return <Layout size={14} className="opacity-70" />;
-    let [w, h] = ratio.split(':').map(Number);
-    
-    // Swap if portrait to match visual expectation
-    if (cardStyle.orientation === 'portrait') {
-      [w, h] = [h, w];
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'cardBackground') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const url = event.target.result as string;
+          if (target === 'background') {
+            updateCardStyle({ backgroundImage: url });
+          } else {
+            updateCardStyle({ cardBackgroundImage: url });
+          }
+        }
+      };
+      reader.readAsDataURL(file);
     }
-
-    // Fit within 14x14 box
-    const maxDim = 14;
-    let width, height;
-    
-    if (w >= h) {
-        width = maxDim;
-        height = width * (h / w);
-    } else {
-        height = maxDim;
-        width = height * (w / h);
-    }
-
-    return (
-      <div 
-        className="border border-current opacity-70 mb-1"
-        style={{ width: `${width}px`, height: `${height}px` }}
-      />
-    );
+    e.target.value = '';
   };
 
   return (
@@ -79,11 +234,11 @@ export const Sidebar = () => {
                     setTimeout(() => setShowResetToast(false), 2000);
                     setTimeout(() => setIsResetting(false), 1000);
                   }}
-                  className="px-2 py-1 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center gap-1.5 transition-transform active:scale-95 shadow-lg hover:opacity-90"
+                  className="px-3 py-1.5 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center gap-1.5 transition-transform active:scale-95 shadow-lg hover:opacity-90"
                   title={t.resetStyle}
                 >
-                  <span className="text-[10px] font-bold tracking-wider">{t.resetStyle}</span>
-                  <RotateCcw size={10} strokeWidth={3} />
+                  <span className="text-xs font-bold tracking-wider">{t.resetStyle}</span>
+                  <RotateCcw size={12} strokeWidth={3} />
                 </button>
                 <button 
                   onClick={() => setIsOpen(false)}
@@ -137,7 +292,7 @@ export const Sidebar = () => {
                            : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-white/60'
                        }`}
                      >
-                       <RatioIcon ratio={ratio.value} />
+                       <RatioIcon ratio={ratio.value} orientation={cardStyle.orientation} />
                        {displayLabel}
                      </button>
                   )})}
@@ -168,41 +323,28 @@ export const Sidebar = () => {
                 )}
 
                 {/* Border Radius */}
-                 <div>
-                  <label className="text-xs font-medium mb-2 block opacity-70">{t.cornerRadius} ({cardStyle.borderRadius}px)</label>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="48" 
-                    value={cardStyle.borderRadius}
-                    onChange={(e) => updateCardStyle({ borderRadius: parseInt(e.target.value) })}
-                    className="w-full accent-black/80 dark:accent-white/80"
-                  />
-                </div>
+                <SliderControl 
+                  label={`${t.cornerRadius} (px)`} 
+                  value={cardStyle.borderRadius} 
+                  min={0} max={48} 
+                  onChange={(val) => updateCardStyle({ borderRadius: val })} 
+                />
                 
                 {/* Border */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium opacity-70">{t.border} ({cardStyle.borderWidth}px)</label>
-                    <div className="relative overflow-hidden w-5 h-5 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.borderColor}
-                        onChange={(e) => updateCardStyle({ borderColor: e.target.value })}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                      <div className="w-full h-full" style={{ backgroundColor: cardStyle.borderColor }} />
-                    </div>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="20" 
-                    value={cardStyle.borderWidth}
-                    onChange={(e) => updateCardStyle({ borderWidth: parseInt(e.target.value) })}
-                    className="w-full accent-black/80 dark:accent-white/80"
+                <div className="grid grid-cols-2 gap-4">
+                  <ColorPicker 
+                    label={t.border}
+                    color={cardStyle.borderColor} 
+                    onChange={(val) => updateCardStyle({ borderColor: val })} 
+                  />
+                  <SliderControl 
+                    label="Width (px)"
+                    value={cardStyle.borderWidth} 
+                    min={0} max={20} 
+                    onChange={(val) => updateCardStyle({ borderWidth: val })} 
                   />
                 </div>
+
                 {/* Shadow */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -218,84 +360,22 @@ export const Sidebar = () => {
                   {cardStyle.shadowEnabled && (
                     <div className="space-y-3 p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
                       <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.xOffset} ({cardStyle.shadowConfig?.x ?? 0})</label>
-                          <input 
-                            type="range" 
-                            min="-50"
-                            max="50"
-                            value={cardStyle.shadowConfig?.x ?? 0}
-                            onChange={(e) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, x: parseInt(e.target.value) || 0 } })}
-                            className="w-full accent-black/80 dark:accent-white/80"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.yOffset} ({cardStyle.shadowConfig?.y ?? 0})</label>
-                          <input 
-                            type="range" 
-                            min="-50"
-                            max="50"
-                            value={cardStyle.shadowConfig?.y ?? 0}
-                            onChange={(e) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, y: parseInt(e.target.value) || 0 } })}
-                            className="w-full accent-black/80 dark:accent-white/80"
-                          />
-                        </div>
+                        <SliderControl label={t.xOffset} value={cardStyle.shadowConfig?.x ?? 0} min={-50} max={50} onChange={(val) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, x: val } })} />
+                        <SliderControl label={t.yOffset} value={cardStyle.shadowConfig?.y ?? 0} min={-50} max={50} onChange={(val) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, y: val } })} />
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.blur} ({cardStyle.shadowConfig?.blur ?? 0})</label>
-                          <input 
-                            type="range" 
-                            min="0"
-                            max="100"
-                            value={cardStyle.shadowConfig?.blur ?? 0}
-                            onChange={(e) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, blur: parseInt(e.target.value) || 0 } })}
-                            className="w-full accent-black/80 dark:accent-white/80"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.spread} ({cardStyle.shadowConfig?.spread ?? 0})</label>
-                          <input 
-                            type="range" 
-                            min="-50"
-                            max="50"
-                            value={cardStyle.shadowConfig?.spread ?? 0}
-                            onChange={(e) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, spread: parseInt(e.target.value) || 0 } })}
-                            className="w-full accent-black/80 dark:accent-white/80"
-                          />
-                        </div>
+                         <SliderControl label={t.blur} value={cardStyle.shadowConfig?.blur ?? 0} min={0} max={100} onChange={(val) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, blur: val } })} />
+                         <SliderControl label={t.spread} value={cardStyle.shadowConfig?.spread ?? 0} min={-50} max={50} onChange={(val) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, spread: val } })} />
                       </div>
 
-                      <div>
-                         <div className="flex items-center justify-between mb-2">
-                           <span className="text-xs opacity-70">{t.colors}</span>
-                           <div className="flex items-center gap-2">
-                             <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                               <input 
-                                 type="color" 
-                                 value={cardStyle.shadowConfig?.color || '#000000'}
-                                 onChange={(e) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, color: e.target.value } })}
-                                 className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                               />
-                               <div className="w-full h-full" style={{ backgroundColor: cardStyle.shadowConfig?.color || '#000000' }} />
-                             </div>
-                           </div>
-                        </div>
-                      </div>
+                      <ColorPicker 
+                        label={t.colors}
+                        color={cardStyle.shadowConfig?.color || '#000000'}
+                        onChange={(val) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, color: val } })}
+                      />
                       
-                      <div>
-                        <label className="text-xs opacity-70 mb-2 block">{t.opacity} ({cardStyle.shadowConfig?.opacity ?? 0})</label>
-                        <input 
-                          type="range" 
-                          min="0" 
-                          max="1" 
-                          step="0.01"
-                          value={cardStyle.shadowConfig?.opacity ?? 0}
-                          onChange={(e) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, opacity: parseFloat(e.target.value) } })}
-                          className="w-full accent-black/80 dark:accent-white/80"
-                        />
-                      </div>
+                      <SliderControl label={t.opacity} value={cardStyle.shadowConfig?.opacity ?? 0} min={0} max={1} step={0.01} onChange={(val) => updateCardStyle({ shadowConfig: { ...cardStyle.shadowConfig, opacity: val } })} />
                     </div>
                   )}
                 </div>
@@ -318,313 +398,279 @@ export const Sidebar = () => {
                 {cardStyle.enableBackground && (
                   <div className="space-y-4 p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
                     <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded mb-2">
-                      <button 
-                         onClick={() => updateCardStyle({ backgroundType: 'solid' })}
-                         className={`flex-1 py-1 text-[10px] rounded transition-all ${cardStyle.backgroundType === 'solid' ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
-                      >
-                        {t.solid}
-                      </button>
-                      <button 
-                         onClick={() => updateCardStyle({ backgroundType: 'gradient' })}
-                         className={`flex-1 py-1 text-[10px] rounded transition-all ${cardStyle.backgroundType === 'gradient' ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
-                      >
-                        {t.gradient}
-                      </button>
+                      {['solid', 'gradient', 'image'].map((type) => (
+                        <button 
+                          key={type}
+                          onClick={() => updateCardStyle({ backgroundType: type as any })}
+                          className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.backgroundType === type ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
+                        >
+                          {t[type as keyof typeof t]}
+                        </button>
+                      ))}
                     </div>
 
-                    {cardStyle.backgroundType === 'solid' ? (
-                      <div className="flex items-center justify-between">
-                         <span className="text-xs opacity-70">{t.background}</span>
-                         <div className="flex items-center gap-2">
-                           <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                             <input 
-                               type="color" 
-                               value={cardStyle.backgroundValue.startsWith('#') ? cardStyle.backgroundValue : '#ffffff'}
-                               onChange={(e) => updateCardStyle({ backgroundValue: e.target.value })}
-                               className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                             />
-                             <div className="w-full h-full" style={{ backgroundColor: cardStyle.backgroundValue }} />
-                           </div>
-                         </div>
-                      </div>
-                    ) : (
+                    {cardStyle.backgroundType === 'solid' && (
+                      <ColorPicker 
+                        label={t.background}
+                        color={cardStyle.backgroundValue.startsWith('#') ? cardStyle.backgroundValue : '#ffffff'}
+                        onChange={(val) => updateCardStyle({ backgroundValue: val })}
+                      />
+                    )}
+
+                    {cardStyle.backgroundType === 'gradient' && (
                       <div className="space-y-3">
-                        {/* Presets */}
-                        <div className="grid grid-cols-4 gap-2 mb-3">
-                           {[
-                              { start: '#f5f7fa', end: '#c3cfe2', angle: 135 },
-                              { start: '#a1c4fd', end: '#c2e9fb', angle: 120 },
-                              { start: '#84fab0', end: '#8fd3f4', angle: 120 },
-                              { start: '#e0c3fc', end: '#8ec5fc', angle: 120 },
-                              { start: '#fbc2eb', end: '#a6c1ee', angle: 0 }, 
-                              { start: '#f6d365', end: '#fda085', angle: 120 },
-                              { start: '#accbee', end: '#e7f0fd', angle: 0 },
-                              { start: '#e9defa', end: '#fbfcdb', angle: 340 }
-                           ].map((preset, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => {
-                                    updateCardStyle({
-                                        gradientStart: preset.start,
-                                        gradientEnd: preset.end,
-                                        gradientAngle: preset.angle,
-                                        backgroundValue: `linear-gradient(${preset.angle}deg, ${preset.start} 0%, ${preset.end} 100%)`
-                                    });
-                                }}
-                                className="w-full h-8 rounded-md border border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/50 transition-all shadow-sm"
-                                style={{ background: `linear-gradient(${preset.angle}deg, ${preset.start} 0%, ${preset.end} 100%)` }}
-                              />
-                           ))}
-                        </div>
+                        <ColorPicker 
+                          label={t.startColor}
+                          color={cardStyle.gradientStart || '#667eea'}
+                          onChange={(val) => {
+                            const start = val;
+                            const end = cardStyle.gradientEnd || '#764ba2';
+                            const angle = cardStyle.gradientAngle || 135;
+                            updateCardStyle({ 
+                              gradientStart: start,
+                              backgroundValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
+                            });
+                          }}
+                        />
 
-                        <div className="flex items-center justify-between">
-                           <span className="text-xs opacity-70">{t.startColor}</span>
-                           <div className="flex items-center gap-2">
-                             <span className="text-xs font-mono opacity-50">{cardStyle.gradientStart || '#667eea'}</span>
-                             <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                               <input 
-                                 type="color" 
-                                 value={cardStyle.gradientStart || '#667eea'}
-                                 onChange={(e) => {
-                                   const start = e.target.value;
-                                   const end = cardStyle.gradientEnd || '#764ba2';
-                                   const angle = cardStyle.gradientAngle || 135;
-                                   updateCardStyle({ 
-                                     gradientStart: start,
-                                     backgroundValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
-                                   });
-                                 }}
-                                 className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                               />
-                               <div className="w-full h-full" style={{ backgroundColor: cardStyle.gradientStart || '#667eea' }} />
-                             </div>
-                           </div>
-                        </div>
+                        <ColorPicker 
+                          label={t.endColor}
+                          color={cardStyle.gradientEnd || '#764ba2'}
+                          onChange={(val) => {
+                            const start = cardStyle.gradientStart || '#667eea';
+                            const end = val;
+                            const angle = cardStyle.gradientAngle || 135;
+                            updateCardStyle({ 
+                              gradientEnd: end,
+                              backgroundValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
+                            });
+                          }}
+                        />
 
-                        <div className="flex items-center justify-between">
-                           <span className="text-xs opacity-70">{t.endColor}</span>
-                           <div className="flex items-center gap-2">
-                             <span className="text-xs font-mono opacity-50">{cardStyle.gradientEnd || '#764ba2'}</span>
-                             <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                               <input 
-                                 type="color" 
-                                 value={cardStyle.gradientEnd || '#764ba2'}
-                                 onChange={(e) => {
-                                   const start = cardStyle.gradientStart || '#667eea';
-                                   const end = e.target.value;
-                                   const angle = cardStyle.gradientAngle || 135;
-                                   updateCardStyle({ 
-                                     gradientEnd: end,
-                                     backgroundValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
-                                   });
-                                 }}
-                                 className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                               />
-                               <div className="w-full h-full" style={{ backgroundColor: cardStyle.gradientEnd || '#764ba2' }} />
-                             </div>
-                           </div>
-                        </div>
-
-                        <div>
-                           <label className="text-xs opacity-70 mb-2 block">{t.angle} ({cardStyle.gradientAngle}°)</label>
-                           <input 
-                             type="range" 
-                             min="0" 
-                             max="360" 
-                             value={cardStyle.gradientAngle || 135}
-                             onChange={(e) => {
-                               const angle = parseInt(e.target.value);
-                               const start = cardStyle.gradientStart || '#667eea';
-                               const end = cardStyle.gradientEnd || '#764ba2';
-                               updateCardStyle({ 
-                                 gradientAngle: angle,
-                                 backgroundValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
-                               });
-                             }}
-                             className="w-full accent-black/80 dark:accent-white/80"
-                           />
-                        </div>
+                        <SliderControl label={`${t.angle} (°)`} value={cardStyle.gradientAngle || 135} min={0} max={360} onChange={(val) => {
+                           const angle = val;
+                           const start = cardStyle.gradientStart || '#667eea';
+                           const end = cardStyle.gradientEnd || '#764ba2';
+                           updateCardStyle({ 
+                             gradientAngle: angle,
+                             backgroundValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
+                           });
+                         }} />
                       </div>
                     )}
 
-                    <div>
-                      <label className="text-xs opacity-70 mb-2 block">{t.padding} ({cardStyle.padding}px)</label>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="100" 
-                        value={cardStyle.padding}
-                        onChange={(e) => updateCardStyle({ padding: parseInt(e.target.value) })}
-                        className="w-full accent-black/80 dark:accent-white/80"
-                      />
-                    </div>
+                    {cardStyle.backgroundType === 'image' && (
+                       <div className="space-y-3">
+                         <div className="relative">
+                           <input 
+                             type="file" 
+                             accept="image/*"
+                             onChange={(e) => handleImageUpload(e, 'background')}
+                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                           />
+                           <button className="w-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-xs py-2 rounded transition-colors flex items-center justify-center gap-2">
+                             <Upload size={14} /> {t.uploadImage}
+                           </button>
+                         </div>
+                         
+                         {cardStyle.backgroundImage && (
+                           <div className="space-y-3 pt-2">
+                             <div className="aspect-video w-full rounded-lg overflow-hidden bg-black/5 relative">
+                               <img src={cardStyle.backgroundImage} className="w-full h-full object-cover" />
+                             </div>
+                             
+                             <div className="grid grid-cols-2 gap-3">
+                               <SliderControl label="X Offset" value={cardStyle.backgroundConfig?.x || 0} min={-100} max={100} onChange={(val) => updateCardStyle({ backgroundConfig: { ...cardStyle.backgroundConfig, x: val } })} />
+                               <SliderControl label="Y Offset" value={cardStyle.backgroundConfig?.y || 0} min={-100} max={100} onChange={(val) => updateCardStyle({ backgroundConfig: { ...cardStyle.backgroundConfig, y: val } })} />
+                             </div>
+                             <SliderControl label={t.scale} value={cardStyle.backgroundConfig?.scale || 1} min={0.1} max={3} step={0.1} onChange={(val) => updateCardStyle({ backgroundConfig: { ...cardStyle.backgroundConfig, scale: val } })} />
+                             <SliderControl label={t.blur} value={cardStyle.backgroundConfig?.blur || 0} min={0} max={20} onChange={(val) => updateCardStyle({ backgroundConfig: { ...cardStyle.backgroundConfig, blur: val } })} />
+                           </div>
+                         )}
+                       </div>
+                    )}
+
+                    <SliderControl label={t.padding} value={cardStyle.padding} min={0} max={100} onChange={(val) => updateCardStyle({ padding: val })} />
                   </div>
                 )}
               </div>
 
-              {/* Colors */}
+              {/* Card Colors */}
               <div className="mb-8 space-y-4">
                 <h2 className="text-sm font-semibold mb-4 opacity-80 flex items-center gap-2">
-                   <Palette size={16} /> {t.colors}
+                   <Palette size={16} /> {t.cardBackground}
                 </h2>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs opacity-70">{t.background}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono opacity-50">{cardStyle.backgroundColor}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.backgroundColor}
-                        onChange={(e) => handleColorChange('backgroundColor', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                      <div className="w-full h-full" style={{ backgroundColor: cardStyle.backgroundColor }} />
+                {/* Card Background (Enhanced) */}
+                <ColorSectionWrapper label={t.cardBackground}>
+                   <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded mb-2">
+                      {['solid', 'gradient', 'image'].map((type) => (
+                        <button 
+                          key={type}
+                          onClick={() => updateCardStyle({ cardBackgroundType: type as any })}
+                          className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.cardBackgroundType === type ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
+                        >
+                          {t[type as keyof typeof t]}
+                        </button>
+                      ))}
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs opacity-70">{t.text}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono opacity-50">{cardStyle.textColor}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.textColor}
-                        onChange={(e) => handleColorChange('textColor', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.textColor }} />
-                    </div>
-                  </div>
-                </div>
+                    {cardStyle.cardBackgroundType === 'solid' && (
+                       <ColorPicker 
+                         label={t.solid}
+                         color={cardStyle.backgroundColor}
+                         onChange={(val) => updateCardStyle({ backgroundColor: val })}
+                       />
+                    )}
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs opacity-70">{t.blockquoteBackground}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.blockquoteBackgroundColor.substring(0, 7)}
-                        onChange={(e) => handleColorChange('blockquoteBackgroundColor', e.target.value + '20')} // Add 20 (hex) alpha ~12% by default when picking new color to keep it subtle
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.blockquoteBackgroundColor }} />
-                    </div>
-                  </div>
-                </div>
+                    {cardStyle.cardBackgroundType === 'gradient' && (
+                      <div className="space-y-3">
+                        <ColorPicker 
+                          label={t.startColor}
+                          color={cardStyle.cardGradientStart || '#ffffff'}
+                          onChange={(val) => {
+                            const start = val;
+                            const end = cardStyle.cardGradientEnd || '#f0f0f0';
+                            const angle = cardStyle.cardGradientAngle || 135;
+                            updateCardStyle({ 
+                              cardGradientStart: start,
+                              cardGradientValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
+                            });
+                          }}
+                        />
+                        <ColorPicker 
+                          label={t.endColor}
+                          color={cardStyle.cardGradientEnd || '#f0f0f0'}
+                          onChange={(val) => {
+                            const start = cardStyle.cardGradientStart || '#ffffff';
+                            const end = val;
+                            const angle = cardStyle.cardGradientAngle || 135;
+                            updateCardStyle({ 
+                              cardGradientEnd: end,
+                              cardGradientValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
+                            });
+                          }}
+                        />
+                        <SliderControl label={`${t.angle} (°)`} value={cardStyle.cardGradientAngle || 135} min={0} max={360} onChange={(val) => {
+                           const angle = val;
+                           const start = cardStyle.cardGradientStart || '#ffffff';
+                           const end = cardStyle.cardGradientEnd || '#f0f0f0';
+                           updateCardStyle({ 
+                             cardGradientAngle: angle,
+                             cardGradientValue: `linear-gradient(${angle}deg, ${start} 0%, ${end} 100%)` 
+                           });
+                         }} />
+                      </div>
+                    )}
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs opacity-70">{t.blockquoteBorder}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.blockquoteBorderColor}
-                        onChange={(e) => handleColorChange('blockquoteBorderColor', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.blockquoteBorderColor }} />
-                    </div>
-                  </div>
-                </div>
+                    {cardStyle.cardBackgroundType === 'image' && (
+                       <div className="space-y-3">
+                         <div className="relative">
+                           <input 
+                             type="file" 
+                             accept="image/*"
+                             onChange={(e) => handleImageUpload(e, 'cardBackground')}
+                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                           />
+                           <button className="w-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-xs py-2 rounded transition-colors flex items-center justify-center gap-2">
+                             <Upload size={14} /> {t.uploadImage}
+                           </button>
+                         </div>
+                         
+                         {cardStyle.cardBackgroundImage && (
+                           <div className="space-y-3 pt-2">
+                             <div className="aspect-video w-full rounded-lg overflow-hidden bg-black/5 relative">
+                               <img src={cardStyle.cardBackgroundImage} className="w-full h-full object-cover" />
+                             </div>
+                             
+                             <div className="grid grid-cols-2 gap-3">
+                               <SliderControl label="X Offset" value={cardStyle.cardBackgroundConfig?.x || 0} min={-100} max={100} step={0.1} onChange={(val) => updateCardStyle({ cardBackgroundConfig: { ...cardStyle.cardBackgroundConfig, x: val } })} />
+                               <SliderControl label="Y Offset" value={cardStyle.cardBackgroundConfig?.y || 0} min={-100} max={100} step={0.1} onChange={(val) => updateCardStyle({ cardBackgroundConfig: { ...cardStyle.cardBackgroundConfig, y: val } })} />
+                             </div>
+                             <SliderControl label={t.scale} value={cardStyle.cardBackgroundConfig?.scale || 1} min={0.1} max={3} step={0.01} onChange={(val) => updateCardStyle({ cardBackgroundConfig: { ...cardStyle.cardBackgroundConfig, scale: val } })} />
+                             <SliderControl label={t.blur} value={cardStyle.cardBackgroundConfig?.blur || 0} min={0} max={20} step={0.1} onChange={(val) => updateCardStyle({ cardBackgroundConfig: { ...cardStyle.cardBackgroundConfig, blur: val } })} />
+                           </div>
+                         )}
+                       </div>
+                    )}
+                </ColorSectionWrapper>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs opacity-70">{t.codeBackground}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.codeBackgroundColor.substring(0, 7)}
-                        onChange={(e) => handleColorChange('codeBackgroundColor', e.target.value + '20')}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.codeBackgroundColor }} />
-                    </div>
-                  </div>
-                </div>
+                <ColorSectionWrapper>
+                  <ColorPicker 
+                    label={t.text}
+                    color={cardStyle.textColor}
+                    onChange={(val) => handleColorChange('textColor', val)}
+                  />
+                </ColorSectionWrapper>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs opacity-70">{t.h1Color}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.h1Color || '#000000'}
-                        onChange={(e) => handleColorChange('h1Color', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h1Color || '#000000' }} />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs opacity-70">{t.h1LineColor}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.h1LineColor || '#3b82f6'}
-                        onChange={(e) => handleColorChange('h1LineColor', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h1LineColor || '#3b82f6' }} />
-                    </div>
-                  </div>
-                </div>
+                <ColorSectionWrapper>
+                  <ColorPicker 
+                    label={t.blockquoteBackground}
+                    color={cardStyle.blockquoteBackgroundColor.substring(0, 7)}
+                    onChange={(val) => handleColorChange('blockquoteBackgroundColor', val + '20')}
+                  />
+                </ColorSectionWrapper>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs opacity-70">{t.h2Color}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.h2Color || '#ffffff'}
-                        onChange={(e) => handleColorChange('h2Color', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h2Color || '#ffffff' }} />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs opacity-70">{t.h2BgColor}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.h2BackgroundColor || '#3b82f6'}
-                        onChange={(e) => handleColorChange('h2BackgroundColor', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h2BackgroundColor || '#3b82f6' }} />
-                    </div>
-                  </div>
-                </div>
+                <ColorSectionWrapper>
+                  <ColorPicker 
+                    label={t.blockquoteBorder}
+                    color={cardStyle.blockquoteBorderColor}
+                    onChange={(val) => handleColorChange('blockquoteBorderColor', val)}
+                  />
+                </ColorSectionWrapper>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs opacity-70">{t.h3Color}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.h3Color || '#000000'}
-                        onChange={(e) => handleColorChange('h3Color', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h3Color || '#000000' }} />
-                    </div>
+                <ColorSectionWrapper>
+                  <ColorPicker 
+                    label={t.codeBackground}
+                    color={cardStyle.codeBackgroundColor.substring(0, 7)}
+                    onChange={(val) => handleColorChange('codeBackgroundColor', val + '20')}
+                  />
+                </ColorSectionWrapper>
+
+                <ColorSectionWrapper>
+                  <div className="grid grid-cols-2 gap-3">
+                    <ColorPicker 
+                      label={t.h1Color}
+                      color={cardStyle.h1Color || '#000000'}
+                      onChange={(val) => handleColorChange('h1Color', val)}
+                    />
+                    <ColorPicker 
+                      label={t.h1LineColor}
+                      color={cardStyle.h1LineColor || '#3b82f6'}
+                      onChange={(val) => handleColorChange('h1LineColor', val)}
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs opacity-70">{t.h3LineColor}</span>
-                    <div className="relative overflow-hidden w-6 h-6 rounded-full border border-black/20 dark:border-white/20 shadow-sm">
-                      <input 
-                        type="color" 
-                        value={cardStyle.h3LineColor || '#3b82f6'}
-                        onChange={(e) => handleColorChange('h3LineColor', e.target.value)}
-                        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 opacity-0"
-                      />
-                       <div className="w-full h-full" style={{ backgroundColor: cardStyle.h3LineColor || '#3b82f6' }} />
-                    </div>
+                </ColorSectionWrapper>
+
+                <ColorSectionWrapper>
+                  <div className="grid grid-cols-2 gap-3">
+                    <ColorPicker 
+                      label={t.h2Color}
+                      color={cardStyle.h2Color || '#ffffff'}
+                      onChange={(val) => handleColorChange('h2Color', val)}
+                    />
+                    <ColorPicker 
+                      label={t.h2BgColor}
+                      color={cardStyle.h2BackgroundColor || '#3b82f6'}
+                      onChange={(val) => handleColorChange('h2BackgroundColor', val)}
+                    />
                   </div>
-                </div>
+                </ColorSectionWrapper>
+
+                <ColorSectionWrapper>
+                  <div className="grid grid-cols-2 gap-3">
+                    <ColorPicker 
+                      label={t.h3Color}
+                      color={cardStyle.h3Color || '#000000'}
+                      onChange={(val) => handleColorChange('h3Color', val)}
+                    />
+                    <ColorPicker 
+                      label={t.h3LineColor}
+                      color={cardStyle.h3LineColor || '#3b82f6'}
+                      onChange={(val) => handleColorChange('h3LineColor', val)}
+                    />
+                  </div>
+                </ColorSectionWrapper>
               </div>
 
               {/* Typography */}
@@ -700,10 +746,8 @@ export const Sidebar = () => {
                              if (event.target?.result) {
                                const url = event.target.result as string;
                                
-                               // Check if font already exists to avoid duplicates
                                const exists = cardStyle.customFonts.some(f => f.name === name);
                                
-                               // Try to detect variable font by file name (rough heuristic)
                                const isVariable = name.toLowerCase().includes('variable') || 
                                                   name.toLowerCase().includes('var') ||
                                                   name.toLowerCase().includes('vf');
@@ -716,8 +760,6 @@ export const Sidebar = () => {
                                  });
                                }
                                
-                               // Apply the font immediately
-                               // Use a small timeout to ensure the DOM has updated with the new style tag
                                setTimeout(() => {
                                  updateCardStyle({ fontFamily: name });
                                }, 100);
@@ -725,7 +767,6 @@ export const Sidebar = () => {
                            };
                            reader.readAsDataURL(file);
                          }
-                         // Reset input value so same file can be selected again if needed
                          e.target.value = '';
                        }}
                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -735,7 +776,6 @@ export const Sidebar = () => {
                      </button>
                    </div>
                    
-                   {/* Manual Variable Font Toggle for currently selected custom font */}
                    {cardStyle.customFonts.find(f => f.name === cardStyle.fontFamily) && (
                      <div className="mt-2 flex items-center justify-between px-1">
                        <label className="text-[10px] opacity-60 cursor-pointer flex items-center gap-2">
@@ -745,25 +785,9 @@ export const Sidebar = () => {
                            onChange={(e) => {
                              const font = cardStyle.customFonts.find(f => f.name === cardStyle.fontFamily);
                              if (font) {
-                               // We need to update the font in the customFonts array
-                               // Since we don't have a direct 'updateCustomFont' action, we can remove and add it back
-                               // Or better, let's just add a small helper in store or just modify the logic here implies we might need a new action.
-                               // But for now, let's assume we can't easily update without a new action.
-                               // Let's implement a 'updateCustomFont' action or similar pattern if needed.
-                               // Actually, let's just re-add it with new weight, filter out old one.
-                               // NOTE: This changes array order, might be annoying. 
-                               // Better to just add `updateCustomFont` to store.
-                               
-                               // Since I can't easily edit store interface in this turn without potentially breaking things or making it complex,
-                               // I'll stick to: we need to update the store.
-                               // Let's rely on `addCustomFont` being able to overwrite? No, it pushes.
-                               // Let's manually filter and set.
-                               // Wait, `updateCardStyle` takes partial CardStyle.
                                const newFonts = cardStyle.customFonts.map(f => 
                                  f.name === font.name ? { ...f, weight: e.target.checked ? 'variable' : 'normal' } : f
                                );
-                               // @ts-ignore - weight type mismatch if I didn't update store type properly? 
-                               // I did update store type.
                                updateCardStyle({ customFonts: newFonts as any });
                              }
                            }}
@@ -775,23 +799,13 @@ export const Sidebar = () => {
                    )}
                 </div>
 
-                <div>
-                  <label className="text-xs font-medium mb-2 block opacity-70">{t.fontSize} ({cardStyle.fontSize}px)</label>
-                  <input 
-                    type="range" 
-                    min="12" 
-                    max="64" 
-                    value={cardStyle.fontSize}
-                    onChange={(e) => updateCardStyle({ fontSize: parseInt(e.target.value) })}
-                    className="w-full accent-black/80 dark:accent-white/80"
-                  />
-                </div>
+                <SliderControl label={t.fontSize} value={cardStyle.fontSize} min={12} max={64} onChange={(val) => updateCardStyle({ fontSize: val })} />
               </div>
 
               {/* Watermark & Page Number */}
               <div className="mb-8 space-y-4">
                  <h2 className="text-sm font-semibold mb-4 opacity-80 flex items-center gap-2">
-                   <Type size={16} /> {t.watermark} / {t.pageNumber}
+                   <Stamp size={16} /> {t.watermark} / {t.pageNumber}
                  </h2>
 
                  {/* Watermark */}
@@ -833,18 +847,7 @@ export const Sidebar = () => {
                            </div>
                         </div>
 
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.opacity} ({cardStyle.watermark.opacity})</label>
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="1" 
-                            step="0.05"
-                            value={cardStyle.watermark.opacity}
-                            onChange={(e) => updateCardStyle({ watermark: { ...cardStyle.watermark, opacity: parseFloat(e.target.value) } })}
-                            className="w-full accent-black/80 dark:accent-white/80"
-                          />
-                        </div>
+                        <SliderControl label={t.opacity} value={cardStyle.watermark.opacity} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, opacity: val } })} />
                       </div>
                     )}
                  </div>

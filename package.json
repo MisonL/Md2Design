@@ -20,6 +20,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^0.559.0",
     "react": "^19.2.0",
+    "react-colorful": "^5.6.1",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
     "react-rnd": "^10.5.2",
