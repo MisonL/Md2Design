@@ -81,6 +81,9 @@ const translations = {
     exportSuccess: 'Export Successful',
     exportSuccessMsg: 'All images have been saved to your device.',
     resetStyle: 'RESET',
+    styleResetToast: 'Style Reset',
+    settingsRestoredToast: 'Settings restored to initial state',
+    undo: 'Undo',
   },
   zh: {
     title: 'Md2Design',
@@ -162,6 +165,9 @@ const translations = {
     exportSuccess: '导出成功',
     exportSuccessMsg: '所有图片已保存至您的设备。',
     resetStyle: '重置样式',
+    styleResetToast: '样式已重置',
+    settingsRestoredToast: '设置已恢复到初始状态',
+    undo: '撤回',
   }
 };
 

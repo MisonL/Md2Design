@@ -173,10 +173,53 @@ const ColorSectionWrapper = ({ children, label }: { children: React.ReactNode, l
 );
 
 export const Sidebar = () => {
-  const { cardStyle, updateCardStyle, addCustomFont, resetCardStyle, setIsResetting } = useStore();
+  const { cardStyle, updateCardStyle, addCustomFont, resetCardStyle, undoReset, setIsResetting } = useStore();
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
   const [showResetToast, setShowResetToast] = useState(false);
+  const [resetCountdown, setResetCountdown] = useState(10);
+  const countdownTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleReset = () => {
+    setIsResetting(true);
+    resetCardStyle();
+    setShowResetToast(true);
+    setResetCountdown(10);
+    
+    if (countdownTimer.current) clearInterval(countdownTimer.current);
+    
+    countdownTimer.current = setInterval(() => {
+      setResetCountdown(prev => {
+        if (prev <= 0.1) {
+          clearInterval(countdownTimer.current!);
+          setShowResetToast(false);
+          setIsResetting(false);
+          return 0;
+        }
+        return prev - 0.1;
+      });
+    }, 100);
+  };
+
+  const handleUndo = () => {
+    undoReset();
+    setShowResetToast(false);
+    setIsResetting(false);
+    if (countdownTimer.current) clearInterval(countdownTimer.current);
+  };
+
+  const closeToast = () => {
+    setShowResetToast(false);
+    setIsResetting(false);
+    if (countdownTimer.current) clearInterval(countdownTimer.current);
+  };
+
+  // Get color based on countdown
+  const getCountdownColor = () => {
+    if (resetCountdown > 5) return '#22c55e'; // Green
+    if (resetCountdown > 2) return '#eab308'; // Yellow
+    return '#ef4444'; // Red
+  };
 
   const handleColorChange = (key: keyof CardStyle, value: string) => {
     updateCardStyle({ [key]: value });
@@ -227,13 +270,7 @@ export const Sidebar = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => {
-                    setIsResetting(true);
-                    resetCardStyle();
-                    setShowResetToast(true);
-                    setTimeout(() => setShowResetToast(false), 2000);
-                    setTimeout(() => setIsResetting(false), 1000);
-                  }}
+                  onClick={handleReset}
                   className="px-3 py-1.5 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center gap-1.5 transition-transform active:scale-95 shadow-lg hover:opacity-90"
                   title={t.resetStyle}
                 >
@@ -916,16 +953,63 @@ export const Sidebar = () => {
       <AnimatePresence>
         {showResetToast && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto"
           >
-            <div className="bg-white/30 dark:bg-black/30 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl rounded-2xl px-8 py-6 flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center">
-                <RotateCcw size={24} className="text-black dark:text-white" />
+            <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-2xl rounded-full px-6 py-4 flex items-center gap-6 min-w-[320px]">
+              {/* Countdown Circle */}
+              <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center">
+                <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="20"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    className="text-black/5 dark:text-white/5"
+                  />
+                  <motion.circle
+                    cx="24"
+                    cy="24"
+                    r="20"
+                    stroke={getCountdownColor()}
+                    strokeWidth="3"
+                    fill="transparent"
+                    strokeDasharray="125.6"
+                    animate={{ strokeDashoffset: 125.6 * (1 - resetCountdown / 10) }}
+                    transition={{ duration: 0.1, ease: "linear" }}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold font-mono text-black dark:text-white leading-none">
+                    {Math.ceil(resetCountdown)}s
+                  </span>
+                </div>
               </div>
-              <span className="text-sm font-bold text-black dark:text-white tracking-wide">已重置样式</span>
+
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-black dark:text-white mb-0.5 whitespace-nowrap">{t.styleResetToast}</h3>
+                <p className="text-[10px] opacity-60 text-black dark:text-white whitespace-nowrap">{t.settingsRestoredToast}</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleUndo}
+                  className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-bold hover:opacity-90 transition-opacity active:scale-95 whitespace-nowrap"
+                >
+                  {t.undo}
+                </button>
+                <button
+                  onClick={closeToast}
+                  className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-black dark:text-white opacity-40 hover:opacity-100 flex-shrink-0"
+                >
+                  <Plus size={18} className="rotate-45" />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

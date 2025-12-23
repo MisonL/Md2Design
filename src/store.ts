@@ -138,8 +138,10 @@ interface AppState {
   removeCardImage: (cardIndex: number, imageId: string) => void;
   
   cardStyle: CardStyle;
+  previousCardStyle: CardStyle | null;
   updateCardStyle: (style: Partial<CardStyle>) => void;
   resetCardStyle: () => void;
+  undoReset: () => void;
   addCustomFont: (font: CustomFont) => void;
 
   isResetting: boolean;
@@ -340,6 +342,7 @@ export const useStore = create<AppState>()(
   }),
 
   cardStyle: INITIAL_CARD_STYLE,
+  previousCardStyle: null,
   updateCardStyle: (style) => set((state) => {
     // If updating shadow config, recompute shadow string
     let newStyle = { ...style };
@@ -379,7 +382,19 @@ export const useStore = create<AppState>()(
       cardStyle: { ...state.cardStyle, ...newStyle }
     };
   }),
-  resetCardStyle: () => set({ cardStyle: INITIAL_CARD_STYLE }),
+  resetCardStyle: () => set((state) => ({ 
+    previousCardStyle: state.cardStyle,
+    cardStyle: INITIAL_CARD_STYLE 
+  })),
+  undoReset: () => set((state) => {
+    if (state.previousCardStyle) {
+      return {
+        cardStyle: state.previousCardStyle,
+        previousCardStyle: null
+      };
+    }
+    return state;
+  }),
   addCustomFont: (font) => set((state) => ({
     cardStyle: {
       ...state.cardStyle,
