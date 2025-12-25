@@ -103,42 +103,43 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8"
         >
-          {/* Backdrop with heavy blur */}
-          <div 
-            className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-md transition-all"
+          {/* Standard Backdrop with Noise for Banding Prevention */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md"
             onClick={onClose}
-          />
+          >
+            {/* Subtle Noise Layer - Essential for preventing banding on gradients/blurs */}
+            <div 
+              className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
+              }}
+            />
+          </motion.div>
 
           {/* Modal Content */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            initial={{ scale: 0.96, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-4xl h-[80vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col md:flex-row"
+            exit={{ scale: 0.96, opacity: 0, y: 20 }}
+            transition={{ 
+              type: "spring", 
+              damping: 25, 
+              stiffness: 300
+            }}
+            className="relative w-full max-w-4xl h-[80vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col md:flex-row border border-white/20 dark:border-white/10"
             style={{
-              background: 'rgba(255, 255, 255, 0.4)',
-              backdropFilter: 'blur(40px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+              background: 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
             }}
           >
-            {/* Diffuse Gradient Background (Blobs) */}
-            <div className="absolute inset-0 overflow-hidden -z-20 pointer-events-none opacity-50 dark:opacity-40">
-              <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/30 dark:bg-blue-600/20 rounded-full blur-[100px] animate-pulse" />
-              <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-400/30 dark:bg-purple-600/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-              <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-pink-400/20 dark:bg-pink-600/10 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
-            </div>
-
-            {/* Noise Layer to prevent color banding (sRGB) */}
-            <div 
-              className="absolute inset-0 -z-10 pointer-events-none opacity-[0.03] dark:opacity-[0.05] mix-blend-overlay"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
-              }}
-            />
-            
-            {/* Dark mode override for background */}
-            <div className="absolute inset-0 bg-white/20 dark:bg-black/60 -z-10" />
+            {/* Dark mode override for background - Pure color, no blobs */}
+            <div className="absolute inset-0 bg-white/40 dark:bg-[#0a0a0a]/90 -z-10" />
             
             {/* Left Sidebar: Version List */}
             <div className="w-full md:w-64 flex-shrink-0 bg-black/5 dark:bg-white/5 border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 flex flex-col">
