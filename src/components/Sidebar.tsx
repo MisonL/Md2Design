@@ -715,9 +715,8 @@ const ColorSectionWrapper = ({ children, label }: { children: React.ReactNode, l
 );
 
 export const Sidebar = () => {
-  const { cardStyle, updateCardStyle, addCustomFont, resetCardStyle, undoReset, setIsResetting } = useStore();
+  const { cardStyle, updateCardStyle, addCustomFont, resetCardStyle, undoReset, setIsResetting, isSidebarOpen, setIsSidebarOpen } = useStore();
   const t = useTranslation();
-  const [isOpen, setIsOpen] = useState(true);
   const [showResetToast, setShowResetToast] = useState(false);
   const [resetCountdown, setResetCountdown] = useState(10);
   const countdownTimer = useRef<NodeJS.Timeout | null>(null);
@@ -797,7 +796,7 @@ export const Sidebar = () => {
   return (
     <>
       <AnimatePresence mode="wait">
-        {isOpen ? (
+        {isSidebarOpen ? (
           <motion.div
             initial={{ x: 350, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -820,7 +819,7 @@ export const Sidebar = () => {
                   <RotateCcw size={12} strokeWidth={3} />
                 </button>
                 <button 
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => setIsSidebarOpen(false)}
                   className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
                 >
                   <ChevronRight size={18} />
@@ -1507,7 +1506,7 @@ export const Sidebar = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 50, opacity: 0 }}
             whileHover={{ scale: 1.1 }}
-            onClick={() => setIsOpen(true)}
+            onClick={() => setIsSidebarOpen(true)}
             className="absolute right-6 top-1/2 -translate-y-1/2 p-3 glass-panel rounded-full z-40 text-inherit shadow-xl"
           >
             <ChevronLeft size={24} />

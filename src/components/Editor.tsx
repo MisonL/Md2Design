@@ -7,9 +7,8 @@ import { htmlToMarkdown } from '../utils/turndown';
 import { paginateMarkdown } from '../utils/pagination';
 
 export const Editor = () => {
-  const { markdown, setMarkdown, addCardImage, cardStyle } = useStore();
+  const { markdown, setMarkdown, addCardImage, cardStyle, isEditorOpen, setIsEditorOpen } = useStore();
   const t = useTranslation();
-  const [isOpen, setIsOpen] = useState(true);
   const [showPaginationToast, setShowPaginationToast] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -169,7 +168,7 @@ export const Editor = () => {
   return (
     <>
       <AnimatePresence mode="wait">
-        {isOpen ? (
+        {isEditorOpen ? (
           <motion.div
             initial={{ x: -400, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -183,7 +182,7 @@ export const Editor = () => {
                 <span>{t.editor}</span>
               </div>
               <button 
-                onClick={() => setIsOpen(false)}
+                onClick={() => setIsEditorOpen(false)}
                 className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
               >
                 <ChevronLeft size={18} />
@@ -257,7 +256,7 @@ export const Editor = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -50, opacity: 0 }}
             whileHover={{ scale: 1.1 }}
-            onClick={() => setIsOpen(true)}
+            onClick={() => setIsEditorOpen(true)}
             className="absolute left-6 top-1/2 -translate-y-1/2 p-3 glass-panel rounded-full z-40 text-inherit shadow-xl"
           >
             <ChevronRight size={24} />

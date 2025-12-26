@@ -20,6 +20,29 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   // Update data
   const updates = [
     {
+      version: 'v1.5.1',
+      date: '2025-12-26',
+      title: {
+        en: 'Responsive Layout & Safe Zones',
+        zh: '响应式布局 & 安全区域'
+      },
+      changes: {
+        en: [
+          'Fixed preview card overlap with editor/sidebar',
+          'Added intelligent safe zone calculation',
+          'Card automatically centers in available space',
+          'Improved scaling logic for large dimensions',
+        ],
+        zh: [
+          '修复了预览卡片与编辑器/侧边栏重叠的问题',
+          '增加了智能安全区域计算',
+          '卡片自动在剩余可用空间中居中显示',
+          '优化了大尺寸卡片的缩放逻辑',
+        ]
+      },
+      demo: 'responsive-layout'
+    },
+    {
       version: 'v1.5.0',
       date: '2025-12-26',
       title: {
@@ -266,6 +289,12 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                          {currentUpdate.demo === 'presets-gradients' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 border border-black/5 dark:border-white/5 shadow-inner min-h-[300px] flex flex-col items-center justify-center gap-8">
                               <DemoPresets />
+                           </div>
+                         )}
+
+                         {currentUpdate.demo === 'responsive-layout' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 border border-black/5 dark:border-white/5 shadow-inner min-h-[300px] flex flex-col items-center justify-center gap-8">
+                              <DemoResponsiveLayout />
                            </div>
                          )}
                          
@@ -710,6 +739,104 @@ const DemoBgImage = () => {
          <CheckCircle2 size={12} className="text-green-500" />
          <span>{language === 'zh' ? '支持动态调整' : 'Supports continuous adjustment'}</span>
        </div>
+    </div>
+  );
+};
+
+const DemoResponsiveLayout = () => {
+  const { language } = useStore();
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
+
+  return (
+    <div className="w-full flex flex-col items-center gap-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center">
+        {language === 'zh' ? '智能安全区域演示' : 'Safe Zone Calculation Demo'}
+      </div>
+
+      <div className="relative w-full max-w-md aspect-video bg-slate-200 dark:bg-[#151515] rounded-xl border border-black/5 dark:border-white/5 overflow-hidden shadow-sm flex">
+        {/* Left Panel */}
+        <motion.div 
+          animate={{ width: leftOpen ? '30%' : '0%' }}
+          className="h-full bg-white/50 dark:bg-white/5 border-r border-black/5 dark:border-white/5 relative overflow-hidden"
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[10px] font-mono opacity-30 rotate-90 whitespace-nowrap">EDITOR</span>
+          </div>
+        </motion.div>
+
+        {/* Center Content */}
+        <motion.div 
+          className="flex-1 h-full relative flex items-center justify-center"
+          animate={{ 
+            paddingLeft: leftOpen ? '0px' : '0px', 
+            paddingRight: rightOpen ? '0px' : '0px'
+          }}
+        >
+          <div className="absolute inset-0 grid-bg opacity-[0.03]" />
+          
+          {/* The Card */}
+          <motion.div
+            layout
+            className="w-24 aspect-[3/4] bg-white dark:bg-[#202020] rounded-lg shadow-lg border border-black/5 dark:border-white/10 flex flex-col p-2 gap-2 z-10"
+          >
+            <div className="w-8 h-1 bg-blue-500 rounded-full" />
+            <div className="space-y-1">
+              <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full" />
+              <div className="w-4/5 h-1 bg-black/10 dark:bg-white/10 rounded-full" />
+              <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full" />
+            </div>
+          </motion.div>
+
+          {/* Safe Zone Indicators */}
+          <motion.div 
+            className="absolute left-0 top-0 bottom-0 border-l-2 border-dashed border-green-500/30"
+            animate={{ x: 0 }}
+          />
+          <motion.div 
+            className="absolute right-0 top-0 bottom-0 border-r-2 border-dashed border-green-500/30"
+            animate={{ x: 0 }}
+          />
+          
+          <div className="absolute bottom-2 flex gap-4 text-[8px] font-mono opacity-40">
+            <motion.span animate={{ opacity: leftOpen ? 1 : 0.3 }}>PAD-L</motion.span>
+            <motion.span animate={{ opacity: rightOpen ? 1 : 0.3 }}>PAD-R</motion.span>
+          </div>
+        </motion.div>
+
+        {/* Right Panel */}
+        <motion.div 
+          animate={{ width: rightOpen ? '25%' : '0%' }}
+          className="h-full bg-white/50 dark:bg-white/5 border-l border-black/5 dark:border-white/5 relative overflow-hidden"
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[10px] font-mono opacity-30 -rotate-90 whitespace-nowrap">SIDEBAR</span>
+          </div>
+        </motion.div>
+      </div>
+
+      <div className="flex gap-4">
+        <button
+          onClick={() => setLeftOpen(!leftOpen)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+            leftOpen 
+              ? 'bg-blue-500 text-white border-blue-500' 
+              : 'bg-transparent border-black/10 dark:border-white/10 text-slate-500'
+          }`}
+        >
+          {language === 'zh' ? '编辑器' : 'Editor'}
+        </button>
+        <button
+          onClick={() => setRightOpen(!rightOpen)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+            rightOpen 
+              ? 'bg-blue-500 text-white border-blue-500' 
+              : 'bg-transparent border-black/10 dark:border-white/10 text-slate-500'
+          }`}
+        >
+          {language === 'zh' ? '侧边栏' : 'Sidebar'}
+        </button>
+      </div>
     </div>
   );
 };

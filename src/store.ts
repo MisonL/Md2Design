@@ -158,6 +158,11 @@ interface AppState {
   savePreset: (name: string) => void;
   deletePreset: (id: string) => void;
   applyPreset: (style: CardStyle) => void;
+
+  isEditorOpen: boolean;
+  setIsEditorOpen: (isOpen: boolean) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
 export const PRESET_GRADIENTS = [
@@ -444,6 +449,11 @@ export const useStore = create<AppState>()(
     presets: state.presets.filter((p) => p.id !== id)
   })),
   applyPreset: (style) => set({ cardStyle: JSON.parse(JSON.stringify(style)) }),
+
+  isEditorOpen: true,
+  setIsEditorOpen: (isOpen) => set({ isEditorOpen: isOpen }),
+  isSidebarOpen: true,
+  setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
     }),
     {
       name: 'md2card-storage',
@@ -456,6 +466,8 @@ export const useStore = create<AppState>()(
         cardImages: state.cardImages,
         activeCardIndex: state.activeCardIndex,
         presets: state.presets,
+        isEditorOpen: state.isEditorOpen,
+        isSidebarOpen: state.isSidebarOpen,
       }),
       onRehydrateStorage: () => (state) => {
         if (state?.theme === 'dark') {
