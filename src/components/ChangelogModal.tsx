@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2 } from 'lucide-react';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
@@ -19,6 +19,33 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
 
   // Update data
   const updates = [
+    {
+      version: 'v1.6.0',
+      date: '2025-12-28',
+      title: {
+        en: 'Custom Export & Smart Hints',
+        zh: '自定义导出 & 智能提示'
+      },
+      changes: {
+        en: [
+          'Added onboarding tooltip to help users find the feedback and update entrance',
+          'Overhauled export settings with brand new custom filename feature',
+          'Support for multiple naming parts: Prefix, Date, Custom Name, and Number Order',
+          'Drag-and-drop or use arrows to reorder filename segments',
+          'New hover animations for feedback and changelog buttons',
+          'Added ZIP archive export for better compatibility with system folders',
+        ],
+        zh: [
+          '新增引导提示框，快速帮助用户找到更新反馈入口',
+          '全面重构导出设置，新增全新的文件名自定义功能',
+          '支持多维度命名：前缀、日期、自定义名称、数字顺序',
+          '支持通过箭头或拖拽调整文件名各部分的先后顺序',
+          '为意见反馈和更新日志按钮添加了动感的悬浮动画',
+          '新增 ZIP 压缩包导出模式，完美解决系统文件夹导出权限问题',
+        ]
+      },
+      demo: 'export-naming'
+    },
     {
       version: 'v1.5.1',
       date: '2025-12-26',
@@ -177,7 +204,7 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
               damping: 25, 
               stiffness: 300
             }}
-            className="relative w-full max-w-4xl h-[80vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col md:flex-row border border-white/20 dark:border-white/10"
+            className="relative w-full max-w-4xl h-[80vh] overflow-hidden rounded-3xl flex flex-col md:flex-row border border-white/20 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
             style={{
               background: 'rgba(255, 255, 255, 0.7)',
               backdropFilter: 'blur(20px) saturate(180%)',
@@ -204,7 +231,7 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                       onClick={() => setSelectedVersion(update.version)}
                       className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${
                         selectedVersion === update.version 
-                          ? 'bg-white dark:bg-white/10 shadow-lg shadow-black/5 dark:shadow-black/20' 
+                          ? 'bg-white dark:bg-white/10 shadow-md dark:shadow-black/40' 
                           : 'hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
                     >
@@ -279,6 +306,14 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                               {language === 'zh' ? '功能演示' : 'Feature Demo'}
                             </h3>
                          </div>
+
+                         {currentUpdate.demo === 'export-naming' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/5 shadow-inner min-h-[400px] flex flex-col items-center justify-center gap-8">
+                              <DemoOnboardingHint />
+                              <div className="w-full max-w-md h-px bg-black/5 dark:bg-white/5" />
+                              <DemoExportNaming />
+                           </div>
+                         )}
 
                          {currentUpdate.demo === 'markdown-breaks' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-4 md:p-6 border border-black/5 dark:border-white/5 shadow-inner">
@@ -370,6 +405,405 @@ const DemoMarkdown = () => {
              </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoExportNaming = () => {
+  const { language } = useStore();
+  const t = useTranslation();
+  const [namingMode, setNamingMode] = useState<'system' | 'custom'>('system');
+  const [namingParts, setNamingParts] = useState<('prefix' | 'date' | 'custom' | 'number')[]>(['prefix', 'date', 'custom', 'number']);
+  const [namingConfigs, setNamingConfigs] = useState({
+    prefix: 'Md2Design',
+    custom: 'MyCard',
+    includeTime: true,
+    dateFormat: 'dateFormatFull' as 'dateFormatFull' | 'dateFormatShort' | 'dateFormatMDY' | 'dateFormatDMY' | 'dateFormatYMD',
+    numberType: 'arabic' as 'arabic' | 'chinese',
+    numberOrder: 'asc' as 'asc' | 'desc',
+    zeroStart: false,
+  });
+
+  const CustomDropdown = <T extends string>({ 
+    value, 
+    options, 
+    onChange, 
+    className = "" 
+  }: { 
+    value: T, 
+    options: { id: T, label: string }[], 
+    onChange: (val: T) => void,
+    className?: string
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const selectedOption = options.find(o => o.id === value);
+
+    return (
+      <div className={`relative ${className}`}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full bg-white/50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-lg p-2 text-[10px] flex items-center justify-between hover:border-blue-500/30 transition-all"
+        >
+          <span className="truncate">{selectedOption?.label}</span>
+          <ChevronDown size={10} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <div className="fixed inset-0 z-[120]" onClick={() => setIsOpen(false)} />
+              <motion.div
+                initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                className="absolute left-0 right-0 top-full mt-1 z-[121] bg-white dark:bg-[#1a1a1a] border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden py-1"
+              >
+                {options.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => {
+                      onChange(option.id);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full px-3 py-1.5 text-left text-[10px] transition-colors flex items-center justify-between ${
+                      value === option.id 
+                        ? 'bg-blue-500 text-white' 
+                        : 'text-slate-700 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    {option.label}
+                    {value === option.id && <CheckIcon size={10} />}
+                  </button>
+                ))}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+  
+  const move = (idx: number, dir: number) => {
+    const newParts = [...namingParts];
+    const targetIdx = idx + dir;
+    if (targetIdx < 0 || targetIdx >= namingParts.length) return;
+    [newParts[idx], newParts[targetIdx]] = [newParts[targetIdx], newParts[idx]];
+    setNamingParts(newParts);
+  };
+
+  const getLabel = (part: string) => {
+    const labels: any = { 
+      'prefix': language === 'zh' ? '前缀' : 'Prefix', 
+      'date': language === 'zh' ? '日期' : 'Date', 
+      'custom': language === 'zh' ? '自定义名称' : 'Custom Name', 
+      'number': language === 'zh' ? '数字顺序' : 'Number Order' 
+    };
+    return labels[part] || part;
+  };
+
+  const generateFileName = (index: number, total: number) => {
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    
+    const getFormattedDate = () => {
+      const yy = now.getFullYear().toString().slice(-2);
+      const mm = pad(now.getMonth() + 1);
+      const dd = pad(now.getDate());
+      
+      switch (namingConfigs.dateFormat) {
+        case 'dateFormatFull': return `${yy}${mm}${dd}`;
+        case 'dateFormatShort': return `${mm}${dd}`;
+        case 'dateFormatMDY': return `${mm}${dd}${yy}`;
+        case 'dateFormatDMY': return `${dd}${mm}${yy}`;
+        case 'dateFormatYMD': return `${yy}${mm}${dd}`;
+        default: return `${yy}${mm}${dd}`;
+      }
+    };
+
+    const dateStr = getFormattedDate();
+    const timeStr = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+    
+    if (namingMode === 'system') {
+      return `Md2Design_${dateStr}_${timeStr}_${namingConfigs.custom}_${index + 1}`;
+    }
+
+    const parts = namingParts.map(part => {
+      switch (part) {
+        case 'prefix': return namingConfigs.prefix;
+        case 'date': return namingConfigs.includeTime ? `${dateStr}_${timeStr}` : dateStr;
+        case 'custom': return namingConfigs.custom;
+        case 'number': {
+          let num = namingConfigs.numberOrder === 'asc' ? index : (total - 1 - index);
+          if (!namingConfigs.zeroStart) num += 1;
+          
+          if (namingConfigs.numberType === 'chinese') {
+            const chineseNums = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+            return num <= 10 ? chineseNums[num] : num.toString();
+          }
+          return num.toString();
+        }
+        default: return '';
+      }
+    });
+
+    return parts.filter(Boolean).join('_');
+  };
+
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '文件名自定义演示' : 'Filename Customization Demo'}
+      </div>
+
+      {/* Mode Toggle - Matching TopBar Style */}
+      <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
+        {[
+          { id: 'system', label: t.namingModeSystem },
+          { id: 'custom', label: t.namingModeCustom }
+        ].map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setNamingMode(m.id as any)}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
+              namingMode === m.id ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      {namingMode === 'system' ? (
+        <div className="space-y-4 py-4">
+          <div className="p-4 bg-white dark:bg-[#151515] rounded-xl border border-black/5 dark:border-white/5 shadow-sm space-y-3">
+             <div className="text-[10px] font-bold text-slate-400 uppercase">{language === 'zh' ? '系统默认格式' : 'System Default Format'}</div>
+             <div className="text-xs text-slate-600 dark:text-slate-400 font-mono leading-relaxed">
+               Md2Design_日期(YYMMDD)_时间(HHMM)_自定义名称_数字序号.png
+             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2">
+            {namingParts.map((part, i) => (
+              <motion.div
+                key={part}
+                layout
+                className="flex flex-col p-3 bg-white dark:bg-[#151515] rounded-xl border border-black/5 dark:border-white/5 shadow-sm gap-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center text-[10px] font-bold">
+                      {i + 1}
+                    </div>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{getLabel(part)}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => move(i, -1)} className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded disabled:opacity-20" disabled={i === 0}>
+                      <ChevronRight size={14} className="-rotate-90 opacity-60" />
+                    </button>
+                    <button onClick={() => move(i, 1)} className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded disabled:opacity-20" disabled={i === namingParts.length - 1}>
+                      <ChevronRight size={14} className="rotate-90 opacity-60" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Nested Configs */}
+                {part === 'date' && (
+                  <div className="pl-9 space-y-2 border-l border-black/5 dark:border-white/5">
+                    <div className="flex items-center justify-between">
+                       <span className="text-[10px] text-slate-400">{t.namingIncludeTime || (language === 'zh' ? '包含时间' : 'Include Time')}</span>
+                       <button onClick={() => setNamingConfigs({...namingConfigs, includeTime: !namingConfigs.includeTime})} className={`w-7 h-3.5 rounded-full relative transition-colors ${namingConfigs.includeTime ? 'bg-blue-500' : 'bg-black/10 dark:bg-white/10'}`}>
+                         <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all ${namingConfigs.includeTime ? 'right-0.5' : 'left-0.5'}`} />
+                       </button>
+                    </div>
+                    <CustomDropdown
+                      value={namingConfigs.dateFormat}
+                      options={[
+                        { id: 'dateFormatFull', label: t.dateFormatFull || 'YYMMDD' },
+                        { id: 'dateFormatShort', label: t.dateFormatShort || 'MMDD' },
+                        { id: 'dateFormatYMD', label: t.dateFormatYMD || 'YY/MM/DD' }
+                      ]}
+                      onChange={(val) => setNamingConfigs({ ...namingConfigs, dateFormat: val })}
+                    />
+                  </div>
+                )}
+
+                {part === 'number' && (
+                  <div className="pl-9 space-y-2 border-l border-black/5 dark:border-white/5">
+                    <div className="flex items-center justify-between">
+                       <span className="text-[10px] text-slate-400">{t.namingZeroStart || (language === 'zh' ? '0作为起始' : 'Zero Start')}</span>
+                       <button onClick={() => setNamingConfigs({...namingConfigs, zeroStart: !namingConfigs.zeroStart})} className={`w-7 h-3.5 rounded-full relative transition-colors ${namingConfigs.zeroStart ? 'bg-blue-500' : 'bg-black/10 dark:bg-white/10'}`}>
+                         <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all ${namingConfigs.zeroStart ? 'right-0.5' : 'left-0.5'}`} />
+                       </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <CustomDropdown
+                        className="flex-1"
+                        value={namingConfigs.numberType}
+                        options={[
+                          { id: 'arabic', label: t.namingArabic || '1, 2, 3' },
+                          { id: 'chinese', label: t.namingChinese || (language === 'zh' ? '一, 二, 三' : 'Chinese') }
+                        ]}
+                        onChange={(val) => setNamingConfigs({ ...namingConfigs, numberType: val })}
+                      />
+                      <CustomDropdown
+                        className="flex-1"
+                        value={namingConfigs.numberOrder}
+                        options={[
+                          { id: 'asc', label: t.namingOrderAsc || (language === 'zh' ? '升序' : 'ASC') },
+                          { id: 'desc', label: t.namingOrderDesc || (language === 'zh' ? '降序' : 'DESC') }
+                        ]}
+                        onChange={(val) => setNamingConfigs({ ...namingConfigs, numberOrder: val })}
+                      />
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="p-4 bg-blue-500/5 rounded-xl border border-blue-500/10">
+        <div className="text-[10px] font-bold text-blue-500 uppercase mb-2 tracking-widest">
+          {t.namingPreview || (language === 'zh' ? '预览文件名' : 'Filename Preview')}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="text-xs font-mono text-slate-600 dark:text-slate-400 break-all leading-relaxed">
+            {generateFileName(0, 10)}.png
+          </div>
+          {namingMode === 'custom' && namingParts.includes('number') && (
+            <>
+              <div className="text-xs font-mono text-slate-600 dark:text-slate-400 break-all leading-relaxed opacity-60">
+                {generateFileName(1, 10)}.png
+              </div>
+              <div className="text-xs font-mono text-slate-400 dark:text-slate-500 opacity-40">...</div>
+              <div className="text-xs font-mono text-slate-600 dark:text-slate-400 break-all leading-relaxed">
+                {generateFileName(9, 10)}.png
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoOnboardingHint = () => {
+  const { language } = useStore();
+  const t = useTranslation();
+  const [show, setShow] = useState(true);
+  
+  return (
+    <div className="w-full max-w-sm flex flex-col items-center gap-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '交互引导提示' : 'Onboarding Tooltip'}
+      </div>
+
+      <div className="relative flex items-center gap-2">
+        {/* Updates Button - Matching TopBar Style */}
+        <div className="flex items-center gap-1.5 px-3 py-1 bg-white/80 dark:bg-white/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold border border-blue-500/20 relative overflow-hidden shadow-sm">
+          {/* Outer soft glow (Diffuse) */}
+          <motion.div 
+            className="absolute inset-0 rounded-full bg-blue-500/20 blur-md -z-10 pointer-events-none"
+            animate={{ 
+              opacity: [0.4, 0.8, 0.4],
+              scale: [1, 1.15, 1]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          <Sparkles size={10} className="text-blue-500" />
+          <span>{t.changelogTitle || 'Updates'}</span>
+        </div>
+
+        {/* Feedback Button - Matching TopBar Style */}
+        <div className="flex items-center gap-1.5 px-3 py-1 bg-white/80 dark:bg-white/10 text-green-600 dark:text-green-400 rounded-full text-[10px] font-bold border border-green-500/20 relative shadow-sm">
+          {/* Outer soft glow (Diffuse) */}
+          <motion.div 
+            className="absolute inset-0 rounded-full bg-green-500/20 blur-md -z-10 pointer-events-none"
+            animate={{ 
+              opacity: [0.4, 0.8, 0.4],
+              scale: [1, 1.15, 1]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          <MessageSquare size={10} className="text-green-500" />
+          <span>{t.feedback || 'Feedback'}</span>
+        </div>
+
+        {/* Onboarding Tooltip - Matching the morphing animation in TopBar */}
+        <AnimatePresence>
+          {show && (
+            <motion.div
+              initial={{ 
+                opacity: 0, 
+                scaleX: 0, 
+                scaleY: 0,
+                originX: 0,
+                x: 10,
+                borderRadius: "100px"
+              }}
+              animate={{ 
+                opacity: 1, 
+                scaleX: 1, 
+                scaleY: 1,
+                originX: 0,
+                x: 12,
+                borderRadius: "12px"
+              }}
+              exit={{ 
+                opacity: 0, 
+                scaleX: 0, 
+                scaleY: 0,
+                originX: 0,
+                x: 10,
+                borderRadius: "100px"
+              }}
+              transition={{ 
+                type: "spring",
+                stiffness: 260,
+                damping: 20
+              }}
+              className="absolute left-full whitespace-nowrap z-30"
+            >
+              <div className="bg-orange-400/85 dark:bg-orange-500/80 backdrop-blur-md text-white px-4 py-2 rounded-xl shadow-[0_10px_30px_-10px_rgba(251,146,60,0.5)] text-[10px] font-bold flex items-center gap-2 border border-white/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                {t.onboardingTip || (language === 'zh' ? '这里可以查看更新和反馈bug' : 'Check updates and report bugs here')}
+                <button 
+                  onClick={() => setShow(false)}
+                  className="ml-2 p-1 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X size={12} className="text-white" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Reset button if hidden */}
+        {!show && (
+          <button 
+            onClick={() => setShow(true)}
+            className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] text-blue-500 hover:underline"
+          >
+            {language === 'zh' ? '重现提示' : 'Replay Hint'}
+          </button>
+        )}
+      </div>
+      
+      <div className="mt-16 flex items-center gap-2 text-[10px] text-slate-400 italic">
+        <CheckCircle2 size={12} className="text-green-500" />
+        <span>{language === 'zh' ? '仅在有重大更新或首次使用时显示' : 'Shows on major updates or first use'}</span>
       </div>
     </div>
   );
