@@ -356,7 +356,7 @@ const Card = ({
 
             <div className="relative z-10 h-full flex flex-col pointer-events-none">
               <div 
-                className="prose prose-sm max-w-none flex-1 pointer-events-auto overflow-hidden break-words"
+                className="prose prose-sm max-w-none flex-1 pointer-events-auto overflow-hidden break-words [&>*:first-child]:mt-0"
                 style={{ 
                   padding: `${Math.max(cardStyle.contentPadding, 24)}px`,
                   paddingBottom: cardStyle.autoHeight ? `${Math.max(cardStyle.contentPadding, 24)}px` : '4px',
@@ -367,13 +367,13 @@ const Card = ({
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   components={{
                       h1: ({...props}) => (
-                  <div className="flex flex-col items-center mb-8 first:mt-0 mt-8">
+                  <div className="flex flex-col items-center mb-8 mt-4 first:mt-0">
                     <h1 style={{color: cardStyle.h1Color || cardStyle.textColor, fontSize: `${cardStyle.h1FontSize}px`}} className="font-bold mb-2 text-center" {...props} />
                     <div className="h-1 w-24 rounded-full" style={{backgroundColor: cardStyle.h1LineColor || cardStyle.accentColor}} />
                   </div>
                 ),
                 h2: ({...props}) => (
-                  <div className="flex justify-center mb-6 mt-8 first:mt-0">
+                  <div className="flex justify-center mb-6 mt-6 first:mt-0">
                     <h2 
                       style={{
                         backgroundColor: cardStyle.h2BackgroundColor || cardStyle.accentColor, 
@@ -392,7 +392,7 @@ const Card = ({
                       borderLeftColor: cardStyle.h3LineColor || cardStyle.accentColor,
                       fontSize: `${cardStyle.h3FontSize}px`
                     }} 
-                    className="font-bold mb-4 mt-6 first:mt-0 pl-3 border-l-4" 
+                    className="font-bold mb-4 mt-4 first:mt-0 pl-3 border-l-4" 
                     {...props} 
                   />
                 ),
@@ -446,7 +446,7 @@ const Card = ({
                             borderLeftColor: cardStyle.blockquoteBorderColor, 
                             backgroundColor: cardStyle.blockquoteBackgroundColor 
                           }} 
-                          className="border-l-4 pl-4 py-2 my-4 italic opacity-90 rounded-r-lg rounded-bl-sm [&>p:last-child]:mb-0 break-words" 
+                          className="border-l-4 pl-4 py-2 my-4 italic opacity-90 rounded-r-lg rounded-bl-sm [&>p:last-child]:mb-0 [&>p:first-child]:mt-0 break-words" 
                           {...props} 
                         />
                       ),
