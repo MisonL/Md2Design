@@ -17,7 +17,8 @@ export const Editor = () => {
   // Auto-paginate when switching from auto-height to fixed-height mode
   useEffect(() => {
     if (prevAutoHeightRef.current && !cardStyle.autoHeight && markdown.length > 500) {
-      const paginated = paginateMarkdown(markdown, cardStyle);
+      const paginatedArr = paginateMarkdown(markdown, cardStyle);
+      const paginated = paginatedArr.join('\n\n---\n\n');
       if (paginated !== markdown) {
         // Defer state update to avoid cascading render warning
         setTimeout(() => {
@@ -185,7 +186,8 @@ export const Editor = () => {
              
              // Auto-paginate if content is long
              if (!cardStyle.autoHeight && newFullText.length > 500) {
-                 const paginated = paginateMarkdown(newFullText, cardStyle);
+                 const paginatedArr = paginateMarkdown(newFullText, cardStyle);
+                 const paginated = paginatedArr.join('\n\n---\n\n');
                  if (paginated !== newFullText) {
                      setMarkdown(paginated);
                      setShowPaginationToast(true);
@@ -221,7 +223,8 @@ export const Editor = () => {
         const newFullText = markdown.substring(0, start) + plainText + markdown.substring(end);
         
         if (!cardStyle.autoHeight && newFullText.length > 500) {
-            const paginated = paginateMarkdown(newFullText, cardStyle);
+            const paginatedArr = paginateMarkdown(newFullText, cardStyle);
+            const paginated = paginatedArr.join('\n\n---\n\n');
             if (paginated !== newFullText) {
                 setMarkdown(paginated);
                 setShowPaginationToast(true);
@@ -316,9 +319,10 @@ export const Editor = () => {
                    
                    // Wait for state to update (using setTimeout for simple sync)
                    setTimeout(() => {
-                     const currentStyle = useStore.getState().cardStyle;
-                     const paginated = paginateMarkdown(markdown, currentStyle);
-                     if (paginated !== markdown) {
+                      const currentStyle = useStore.getState().cardStyle;
+                      const paginatedArr = paginateMarkdown(markdown, currentStyle);
+                      const paginated = paginatedArr.join('\n\n---\n\n');
+                      if (paginated !== markdown) {
                          setMarkdown(paginated);
                          setShowPaginationToast(true);
                          setTimeout(() => setShowPaginationToast(false), 4000);
