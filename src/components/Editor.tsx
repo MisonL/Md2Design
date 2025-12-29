@@ -164,11 +164,6 @@ export const Editor = () => {
       const htmlData = e.clipboardData.getData('text/html');
     const plainText = e.clipboardData.getData('text/plain');
 
-    // 2. Handle Feishu/Notion/HTML Content (Prioritize over plain text if it looks like a doc)
-    // We detect if it's from Notion or Feishu/Lark for better processing
-    const isNotion = htmlData.includes('notion-') || htmlData.includes('data-block-id');
-    const isFeishu = htmlData.includes('lark-') || htmlData.includes('suite-') || htmlData.includes('feishu');
-
     if (htmlData && htmlData.trim().length > 0) {
       try {
         const convertedMd = htmlToMarkdown(htmlData);

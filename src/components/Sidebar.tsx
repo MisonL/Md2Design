@@ -856,7 +856,7 @@ export const Sidebar = () => {
                       }`}
                     >
                       {o === 'portrait' ? <Smartphone size={14} /> : o === 'landscape' ? <MonitorIcon size={14} /> : <Layout size={14} />}
-                      <span className="capitalize">{o === 'autoHeight' ? '自动高度' : t[o]}</span>
+                      <span className="capitalize">{o === 'autoHeight' ? '自动高度' : (t as any)[o]}</span>
                     </button>
                   ))}
                 </div>
