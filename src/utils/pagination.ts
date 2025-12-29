@@ -8,12 +8,17 @@ const estimateLineHeight = (line: string, nextLine: string | undefined, style: C
   const fontSize = style.fontSize;
   const lineHeight = 1.5; // Slightly tighter for better space utilization
   const isCJK = /[\u4e00-\u9fa5]/.test(line);
-  // More accurate character width estimation
-  const charWidthAvg = isCJK ? fontSize * 1.0 : fontSize * 0.55; 
+  // More accurate character width estimation - reduce over-estimation for long lines
+  const charWidthAvg = isCJK ? fontSize * 1.0 : fontSize * 0.52; 
   const charsPerLine = Math.floor(contentWidth / charWidthAvg) || 1;
 
   const trimmedLine = line.trim();
-  if (trimmedLine === '') return 4; // Smaller gap for empty lines
+  if (trimmedLine === '') return 4;
+
+  // Image height estimation (roughly 200px as defined in Preview.tsx spacer)
+  if (trimmedLine.startsWith('![')) {
+    return 220; 
+  }
 
   // Headers
   if (line.startsWith('# ')) {
@@ -59,10 +64,16 @@ const estimateLineHeight = (line: string, nextLine: string | undefined, style: C
 
 export const paginateMarkdown = (markdown: string, style: CardStyle): string => {
   const { width, height } = getCardDimensions(style);
-  const contentWidth = width - (style.padding * 2) - (style.contentPadding * 2);
+  
+  // Use a fixed base width for pagination calculation to prevent sudden height jumps when scaling
+  const baseWidth = Math.min(width, 800); 
+  const contentWidth = baseWidth - (style.padding * 2) - (style.contentPadding * 2);
   const effectiveContentPadding = Math.max(style.contentPadding, 24);
   const hasFooter = style.pageNumber.enabled || style.watermark.enabled;
-  const footerHeight = hasFooter ? 44 : 12; // Matches h-10 (40px) + small gap
+  const footerHeight = hasFooter ? 44 : 12; 
+  
+  // Scale maxContentHeight according to the ratio of actual width to base width if needed,
+  // but for most cases, we want the pagination to be consistent.
   const maxContentHeight = height - (style.padding * 2) - (effectiveContentPadding * 2) - footerHeight;
 
   // 1. Clean existing pagination markers
