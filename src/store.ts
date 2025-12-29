@@ -30,6 +30,7 @@ export type CardStyle = {
   accentColor: string;
   aspectRatio: '1:1' | '4:3' | '3:2' | '16:9' | 'custom';
   orientation: 'portrait' | 'landscape';
+  autoHeight: boolean;
   width: number;
   height: number;
   borderRadius: number;
@@ -56,10 +57,15 @@ export type CardStyle = {
   };
   
   padding: number;
+  contentPadding: number;
 
   customCSS: string;
   template: 'default'; // Simplified to just default
   fontSize: number;
+  h1FontSize: number;
+  h2FontSize: number;
+  h3FontSize: number;
+  headingScale: number;
   
   customFonts: CustomFont[];
 
@@ -154,6 +160,9 @@ interface AppState {
   isResetting: boolean;
   setIsResetting: (isResetting: boolean) => void;
 
+  previewZoom: number; // 0 means auto-fit
+  setPreviewZoom: (zoom: number) => void;
+
   presets: StylePreset[];
   savePreset: (name: string) => void;
   deletePreset: (id: string) => void;
@@ -219,6 +228,7 @@ const INITIAL_CARD_STYLE: CardStyle = {
   accentColor: '#3b82f6',
   aspectRatio: '4:3',
   orientation: 'portrait',
+  autoHeight: false,
   width: 800,
   height: 600,
   borderRadius: 24,
@@ -238,11 +248,17 @@ const INITIAL_CARD_STYLE: CardStyle = {
     blur: 0
   },
   padding: 40,
+  contentPadding: 24,
   customCSS: '',
-  template: 'default',
-  fontSize: 16,
-  customFonts: [],
-  cardBackgroundType: 'solid',
+      template: 'default',
+      fontSize: 16,
+  h1FontSize: 32,
+  h2FontSize: 24,
+  h3FontSize: 20,
+  headingScale: 1.0,
+      customFonts: [],
+
+      cardBackgroundType: 'solid',
   cardGradientStart: '#ffffff',
   cardGradientEnd: '#f0f0f0',
   cardGradientAngle: 135,
@@ -263,8 +279,8 @@ const INITIAL_CARD_STYLE: CardStyle = {
   h2BackgroundColor: '#3b82f6',
   h3Color: '#000000',
   h3LineColor: '#3b82f6',
-  shadowEnabled: true,
-  shadow: '2px 5px 15px 0px rgba(0, 0, 0, 0.25)',
+  shadowEnabled: false,
+  shadow: 'none',
   shadowConfig: {
     x: 2,
     y: 5,
@@ -434,6 +450,9 @@ export const useStore = create<AppState>()(
   isResetting: false,
   setIsResetting: (isResetting) => set({ isResetting }),
 
+  previewZoom: 0,
+  setPreviewZoom: (previewZoom) => set({ previewZoom }),
+
   presets: [],
   savePreset: (name) => set((state) => ({
     presets: [
@@ -458,6 +477,32 @@ export const useStore = create<AppState>()(
     {
       name: 'md2card-storage',
       storage: createJSONStorage(() => localStorage),
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Migration for v0 to v1: Add headingScale and contentPadding
+          if (persistedState.cardStyle) {
+            persistedState.cardStyle = {
+              ...persistedState.cardStyle,
+              headingScale: persistedState.cardStyle.headingScale ?? 1.0,
+              contentPadding: persistedState.cardStyle.contentPadding ?? 24,
+            };
+          }
+        }
+        if (version <= 1) {
+          // Migration for v1 to v2: Add autoHeight and independent heading sizes
+          if (persistedState.cardStyle) {
+            persistedState.cardStyle = {
+              ...persistedState.cardStyle,
+              autoHeight: persistedState.cardStyle.autoHeight ?? false,
+              h1FontSize: persistedState.cardStyle.h1FontSize ?? 32,
+              h2FontSize: persistedState.cardStyle.h2FontSize ?? 24,
+              h3FontSize: persistedState.cardStyle.h3FontSize ?? 20,
+            };
+          }
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         theme: state.theme,
         language: state.language,

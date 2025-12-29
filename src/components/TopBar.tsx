@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
-import { Moon, Sun, Download, Languages, Info, X, ChevronDown, Check, Github, Sparkles, MessageSquare, Check as CheckIcon } from 'lucide-react';
+import { Moon, Sun, Download, Languages, Info, X, ChevronDown, Check, Github, Sparkles, MessageSquare, Check as CheckIcon, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { toPng, toJpeg } from 'html-to-image';
 import { motion, AnimatePresence } from 'framer-motion';
 import JSZip from 'jszip';
@@ -11,7 +11,7 @@ import { ChangelogModal } from './ChangelogModal';
 import logoSvg from '../assets/logo.svg';
 
 export const TopBar = () => {
-  const { theme, toggleTheme, toggleLanguage, isScrolled } = useStore();
+  const { theme, toggleTheme, toggleLanguage, isScrolled, previewZoom, setPreviewZoom } = useStore();
   const t = useTranslation();
   const [showContact, setShowContact] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -400,6 +400,8 @@ export const TopBar = () => {
              <img src={logoSvg} alt="Logo" className="w-6 h-6" />
              <span className="opacity-90">{t.title}</span>
           </div>
+
+
           
           <div className="flex items-center gap-2">
             <button
@@ -544,6 +546,31 @@ export const TopBar = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Zoom Slider */}
+          <div className="hidden lg:flex items-center gap-2 mr-2">
+            <span className="text-xs font-mono opacity-70 w-8 text-right">
+                {previewZoom > 0 ? `${Math.round(previewZoom * 100)}%` : 'Auto'}
+            </span>
+            <input
+              type="range"
+              min="0.2"
+              max="4"
+              step="0.1"
+              value={previewZoom || 1}
+              onChange={(e) => setPreviewZoom(parseFloat(e.target.value))}
+              className="w-24 accent-blue-500 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+             {previewZoom > 0 && (
+               <button 
+                 onClick={() => setPreviewZoom(0)}
+                 className="ml-1 p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-blue-500"
+                 title="Reset to Auto"
+               >
+                 <RotateCcw size={12} />
+               </button>
+             )}
+          </div>
+
           <button
             onClick={() => setShowContact(true)}
             className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-inherit opacity-80 hover:opacity-100"

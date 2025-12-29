@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, Quote, Heading1, Heading2, Link, Image as ImageIcon, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, Quote, Heading1, Heading2, Link, Image as ImageIcon, Check, Strikethrough } from 'lucide-react';
 import { htmlToMarkdown } from '../utils/turndown';
 import { paginateMarkdown } from '../utils/pagination';
 
@@ -12,6 +12,20 @@ export const Editor = () => {
   const [showPaginationToast, setShowPaginationToast] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevAutoHeightRef = useRef(cardStyle.autoHeight);
+
+  // Auto-paginate when switching from auto-height to fixed-height mode
+  useEffect(() => {
+    if (prevAutoHeightRef.current && !cardStyle.autoHeight && markdown.length > 500) {
+      const paginated = paginateMarkdown(markdown, cardStyle);
+      if (paginated !== markdown) {
+        setMarkdown(paginated);
+        setShowPaginationToast(true);
+        setTimeout(() => setShowPaginationToast(false), 4000);
+      }
+    }
+    prevAutoHeightRef.current = cardStyle.autoHeight;
+  }, [cardStyle.autoHeight, markdown, cardStyle, setMarkdown]);
 
   const insertText = (before: string, after: string = '') => {
     const textarea = textareaRef.current;
@@ -31,6 +45,66 @@ export const Editor = () => {
     }, 0);
   };
 
+  const toggleInlineStyle = (marker: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = markdown.substring(start, end);
+    const escaped = marker.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`^${escaped}(.*)${escaped}$`);
+    
+    if (regex.test(selected)) {
+        const clean = selected.replace(regex, '$1');
+        const newText = markdown.substring(0, start) + clean + markdown.substring(end);
+        setMarkdown(newText);
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start, start + clean.length);
+        }, 0);
+    } else {
+        const newText = markdown.substring(0, start) + marker + selected + marker + markdown.substring(end);
+        setMarkdown(newText);
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + marker.length, end + marker.length);
+        }, 0);
+    }
+  };
+
+  const toggleBlockStyle = (marker: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    // Find line start/end
+    let lineStart = markdown.lastIndexOf('\n', start - 1) + 1;
+    let lineEnd = markdown.indexOf('\n', end);
+    if (lineEnd === -1) lineEnd = markdown.length;
+    
+    const lineContent = markdown.substring(lineStart, lineEnd);
+    const markerWithSpace = marker + ' ';
+    
+    if (lineContent.startsWith(markerWithSpace)) {
+        // Remove
+        const clean = lineContent.substring(markerWithSpace.length);
+        const newText = markdown.substring(0, lineStart) + clean + markdown.substring(lineEnd);
+        setMarkdown(newText);
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start - markerWithSpace.length, end - markerWithSpace.length);
+        }, 0);
+    } else {
+        const newText = markdown.substring(0, lineStart) + markerWithSpace + lineContent + markdown.substring(lineEnd);
+        setMarkdown(newText);
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + markerWithSpace.length, end + markerWithSpace.length);
+        }, 0);
+    }
+  };
+
   const handleImageUpload = (file: File) => {
     const textarea = textareaRef.current;
     // Capture insertion point - default to end if no selection
@@ -41,9 +115,8 @@ export const Editor = () => {
     // Split text by separator up to the cursor position
     const textBefore = markdown.substring(0, startPos);
     // The separator is "\n---\n". We can match it.
-    // The logic in store/preview is `split(/\n---\n/)`.
-    // So the number of separators before the cursor determines the index.
-    const separators = textBefore.match(/\n---\n/g);
+    // The logic in store/preview is `split(/\n\s*---\s*\n|^\s*---\s*$/m)`.
+    const separators = textBefore.match(/\n\s*---\s*\n|^\s*---\s*$/gm);
     const targetCardIndex = separators ? separators.length : 0;
 
     const reader = new FileReader();
@@ -91,10 +164,11 @@ export const Editor = () => {
       const htmlData = e.clipboardData.getData('text/html');
     const plainText = e.clipboardData.getData('text/plain');
 
-    // 2. Handle Feishu/HTML Content (Prioritize over plain text if it looks like a doc)
-    // We only convert if HTML is present and looks "rich" (simple check)
-    // But we also want to allow normal copy paste.
-    // Let's use turndown for HTML content if it's not just a single line of text or image.
+    // 2. Handle Feishu/Notion/HTML Content (Prioritize over plain text if it looks like a doc)
+    // We detect if it's from Notion or Feishu/Lark for better processing
+    const isNotion = htmlData.includes('notion-') || htmlData.includes('data-block-id');
+    const isFeishu = htmlData.includes('lark-') || htmlData.includes('suite-') || htmlData.includes('feishu');
+
     if (htmlData && htmlData.trim().length > 0) {
       try {
         const convertedMd = htmlToMarkdown(htmlData);
@@ -112,7 +186,7 @@ export const Editor = () => {
              const newFullText = markdown.substring(0, start) + convertedMd + markdown.substring(end);
              
              // Auto-paginate if content is long
-             if (newFullText.length > 500) {
+             if (!cardStyle.autoHeight && newFullText.length > 500) {
                  const paginated = paginateMarkdown(newFullText, cardStyle);
                  if (paginated !== newFullText) {
                      setMarkdown(paginated);
@@ -148,7 +222,7 @@ export const Editor = () => {
         const end = textarea?.selectionEnd ?? 0;
         const newFullText = markdown.substring(0, start) + plainText + markdown.substring(end);
         
-        if (newFullText.length > 500) {
+        if (!cardStyle.autoHeight && newFullText.length > 500) {
             const paginated = paginateMarkdown(newFullText, cardStyle);
             if (paginated !== newFullText) {
                 setMarkdown(paginated);
@@ -190,32 +264,35 @@ export const Editor = () => {
             </div>
 
             {/* Toolbar */}
-            <div className="flex items-center gap-1 p-2 border-b border-black/10 dark:border-white/10 overflow-x-auto custom-scrollbar">
-              <button onClick={() => insertText('**','**')} title="Bold" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100">
+            <div className="flex items-center gap-0.5 p-2 border-b border-black/10 dark:border-white/10 overflow-x-auto custom-scrollbar no-scrollbar">
+              <button onClick={() => toggleInlineStyle('**')} title="Bold" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
                 <Bold size={16} />
               </button>
-              <button onClick={() => insertText('*','*')} title="Italic" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100">
+              <button onClick={() => toggleInlineStyle('*')} title="Italic" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
                 <Italic size={16} />
               </button>
-              <button onClick={() => insertText('# ')} title="H1" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100">
+              <button onClick={() => toggleInlineStyle('~~')} title="Strikethrough" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+                <Strikethrough size={16} />
+              </button>
+              <button onClick={() => toggleBlockStyle('#')} title="H1" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
                 <Heading1 size={16} />
               </button>
-              <button onClick={() => insertText('## ')} title="H2" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100">
+              <button onClick={() => toggleBlockStyle('##')} title="H2" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
                 <Heading2 size={16} />
               </button>
-              <button onClick={() => insertText('- ')} title="List" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100">
+              <button onClick={() => toggleBlockStyle('-')} title="List" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
                 <List size={16} />
               </button>
-              <button onClick={() => insertText('> ')} title="Quote" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100">
+              <button onClick={() => toggleBlockStyle('>')} title="Quote" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
                 <Quote size={16} />
               </button>
-              <button onClick={() => insertText('[', '](url)')} title="Link" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100">
+              <button onClick={() => insertText('[', '](url)')} title="Link" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
                 <Link size={16} />
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 title="Image"
-                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100"
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0"
               >
                 <ImageIcon size={16} />
               </button>
@@ -231,6 +308,46 @@ export const Editor = () => {
                   e.target.value = '';
                 }}
               />
+              <div className="w-[1px] h-4 bg-black/10 dark:bg-white/10 mx-1 flex-shrink-0" />
+              <button
+                onClick={() => {
+                   // If in auto-height mode, switch to portrait first to enable pagination
+                   if (cardStyle.autoHeight) {
+                       useStore.getState().updateCardStyle({ autoHeight: false, orientation: 'portrait' });
+                   }
+                   
+                   // Wait for state to update (using setTimeout for simple sync)
+                   setTimeout(() => {
+                     const currentStyle = useStore.getState().cardStyle;
+                     const paginated = paginateMarkdown(markdown, currentStyle);
+                     if (paginated !== markdown) {
+                         setMarkdown(paginated);
+                         setShowPaginationToast(true);
+                         setTimeout(() => setShowPaginationToast(false), 4000);
+                     }
+                   }, 0);
+                }}
+                title="自动分页"
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-90 hover:opacity-100 group flex-shrink-0"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path 
+                    d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" 
+                    fill="url(#star-gradient)"
+                    stroke="url(#star-gradient)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                  <defs>
+                    <linearGradient id="star-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#93C5FD" />
+                      <stop offset="0.5" stopColor="#60A5FA" />
+                      <stop offset="1" stopColor="#3B82F6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </button>
             </div>
             
             <textarea

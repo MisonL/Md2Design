@@ -50,7 +50,7 @@ const PresetsManager = () => {
     let width = style.width || 800;
     let height = style.height || 600;
 
-    if (style.aspectRatio !== 'custom') {
+    if (style.aspectRatio !== 'custom' && !style.autoHeight) {
       const [w, h] = style.aspectRatio.split(':').map(Number);
 
       if (style.orientation === 'portrait') {
@@ -839,23 +839,39 @@ export const Sidebar = () => {
                 
                 {/* Orientation */}
                 <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/10 dark:border-white/10 mb-4">
-                  {(['portrait', 'landscape'] as const).map((o) => (
+                  {['portrait', 'landscape', 'autoHeight'].map((o) => (
                     <button
                       key={o}
-                      onClick={() => updateCardStyle({ orientation: o })}
+                      onClick={() => {
+                          if (o === 'autoHeight') {
+                              updateCardStyle({ autoHeight: true });
+                          } else {
+                              updateCardStyle({ orientation: o as any, autoHeight: false });
+                          }
+                      }}
                       className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        cardStyle.orientation === o
+                        (o === 'autoHeight' ? cardStyle.autoHeight : (!cardStyle.autoHeight && cardStyle.orientation === o))
                           ? 'bg-white text-black shadow-sm'
                           : 'text-inherit hover:bg-black/5 dark:hover:bg-white/5 opacity-60 hover:opacity-100'
                       }`}
                     >
-                      {o === 'portrait' ? <Smartphone size={14} /> : <MonitorIcon size={14} />}
-                      <span className="capitalize">{t[o]}</span>
+                      {o === 'portrait' ? <Smartphone size={14} /> : o === 'landscape' ? <MonitorIcon size={14} /> : <Layout size={14} />}
+                      <span className="capitalize">{o === 'autoHeight' ? '自动高度' : t[o]}</span>
                     </button>
                   ))}
                 </div>
 
                 {/* Aspect Ratio */}
+                {cardStyle.autoHeight ? (
+                    <div className="mb-4">
+                        <SliderControl 
+                            label="卡片宽度 (px)" 
+                            value={cardStyle.width} 
+                            min={300} max={1200} 
+                            onChange={(val) => updateCardStyle({ width: val })} 
+                        />
+                    </div>
+                ) : (
                 <div className="grid grid-cols-5 gap-2 mb-4">
                   {ASPECT_RATIOS.map((ratio) => {
                      const isPortrait = cardStyle.orientation === 'portrait';
@@ -878,6 +894,7 @@ export const Sidebar = () => {
                      </button>
                   )})}
                 </div>
+                )}
 
                 {/* Custom Dimensions */}
                 {cardStyle.aspectRatio === 'custom' && (
@@ -909,6 +926,13 @@ export const Sidebar = () => {
                   value={cardStyle.borderRadius} 
                   min={0} max={48} 
                   onChange={(val) => updateCardStyle({ borderRadius: val })} 
+                />
+
+                <SliderControl 
+                  label="内边距 (px)"
+                  value={cardStyle.contentPadding} 
+                  min={0} max={100} 
+                  onChange={(val) => updateCardStyle({ contentPadding: val })} 
                 />
                 
                 {/* Border */}
@@ -1205,19 +1229,18 @@ export const Sidebar = () => {
                 </ColorSectionWrapper>
 
                 <ColorSectionWrapper>
-                  <ColorPicker 
-                    label={t.blockquoteBackground}
-                    color={cardStyle.blockquoteBackgroundColor.substring(0, 7)}
-                    onChange={(val) => handleColorChange('blockquoteBackgroundColor', val + '20')}
-                  />
-                </ColorSectionWrapper>
-
-                <ColorSectionWrapper>
-                  <ColorPicker 
-                    label={t.blockquoteBorder}
-                    color={cardStyle.blockquoteBorderColor}
-                    onChange={(val) => handleColorChange('blockquoteBorderColor', val)}
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <ColorPicker 
+                      label={t.blockquoteBackground}
+                      color={cardStyle.blockquoteBackgroundColor.substring(0, 7)}
+                      onChange={(val) => handleColorChange('blockquoteBackgroundColor', val + '20')}
+                    />
+                    <ColorPicker 
+                      label={t.blockquoteBorder}
+                      color={cardStyle.blockquoteBorderColor}
+                      onChange={(val) => handleColorChange('blockquoteBorderColor', val)}
+                    />
+                  </div>
                 </ColorSectionWrapper>
 
                 <ColorSectionWrapper>
@@ -1400,7 +1423,15 @@ export const Sidebar = () => {
                    )}
                 </div>
 
-                <SliderControl label={t.fontSize} value={cardStyle.fontSize} min={12} max={64} onChange={(val) => updateCardStyle({ fontSize: val })} />
+                <SliderControl label="文本字号" value={cardStyle.fontSize} min={12} max={64} onChange={(val) => updateCardStyle({ fontSize: val })} />
+                
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <SliderControl label="H1 字号" value={cardStyle.h1FontSize} min={16} max={48} onChange={(val) => updateCardStyle({ h1FontSize: val })} />
+                  <SliderControl label="H2 字号" value={cardStyle.h2FontSize} min={14} max={36} onChange={(val) => updateCardStyle({ h2FontSize: val })} />
+                  <SliderControl label="H3 字号" value={cardStyle.h3FontSize} min={12} max={24} onChange={(val) => updateCardStyle({ h3FontSize: val })} />
+                </div>
+
+                <SliderControl label={t.headingScale} value={cardStyle.headingScale} min={0.5} max={2.0} step={0.1} onChange={(val) => updateCardStyle({ headingScale: val })} />
               </div>
 
               {/* Watermark & Page Number */}

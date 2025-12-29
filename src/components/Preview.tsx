@@ -10,12 +10,13 @@ import { Rnd } from 'react-rnd';
 import { Trash2, Move } from 'lucide-react';
 
 export const Preview = () => {
-  const { markdown, setIsScrolled, setActiveCardIndex, cardStyle, isEditorOpen, isSidebarOpen } = useStore();
+  const { markdown, setIsScrolled, setActiveCardIndex, cardStyle, isEditorOpen, isSidebarOpen, previewZoom, setPreviewZoom } = useStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   
   const { width, height } = getCardDimensions(cardStyle);
   const [scale, setScale] = useState(1);
+  const [autoScale, setAutoScale] = useState(1);
 
   useEffect(() => {
     const calculateScale = () => {
@@ -39,17 +40,46 @@ export const Preview = () => {
       
       // Fit completely within viewport, but never upscale (max 1)
       let s = Math.min(wScale, hScale, 1);
+
+      // In auto-height mode, we only care about width fitting, allowing vertical scrolling
+      if (cardStyle.autoHeight) {
+        s = Math.min(wScale, 1);
+      }
       
       // Minimum scale to avoid invisibility
       if (s < 0.2) s = 0.2;
       
-      setScale(s);
+      setAutoScale(s);
     };
     
     calculateScale();
     window.addEventListener('resize', calculateScale);
     return () => window.removeEventListener('resize', calculateScale);
-  }, [width, height, isEditorOpen, isSidebarOpen]);
+  }, [width, height, isEditorOpen, isSidebarOpen, cardStyle.autoHeight]);
+
+  useEffect(() => {
+    if (previewZoom > 0) {
+      setScale(previewZoom);
+    } else {
+      setScale(autoScale);
+    }
+  }, [previewZoom, autoScale]);
+
+  // Handle Ctrl+Scroll for zoom
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if ((e.ctrlKey || e.metaKey) && scrollRef.current && scrollRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        const currentScale = previewZoom > 0 ? previewZoom : autoScale;
+        const newScale = Math.max(0.2, Math.min(4, currentScale + delta));
+        setPreviewZoom(newScale);
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [previewZoom, autoScale, setPreviewZoom]);
   
   // Handle scroll for TopBar blur effect and active card detection
   useEffect(() => {
@@ -88,7 +118,9 @@ export const Preview = () => {
   }, [setIsScrolled, setActiveCardIndex]);
   
   // Split markdown by "---" to create pages
-  const pages = markdown.split(/\n---\n/).filter(page => page.trim() !== '');
+  const pages = cardStyle.autoHeight 
+    ? [markdown] 
+    : markdown.split(/\n\s*---\s*\n|^\s*---\s*$/m).filter(page => page.trim() !== '');
 
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
   const paddingLeft = (isDesktop && isEditorOpen) ? '448px' : '2rem';
@@ -141,7 +173,8 @@ const Card = ({
   // Dynamic styles based on settings
   const outerStyle = {
     width: `${width}px`,
-    height: `${height}px`,
+    height: cardStyle.autoHeight ? 'auto' : `${height}px`,
+    minHeight: cardStyle.autoHeight ? `${height}px` : undefined,
     padding: cardStyle.enableBackground ? `${cardStyle.padding}px` : '0',
     background: 'transparent', // Handled by separate layer
   };
@@ -155,7 +188,7 @@ const Card = ({
     borderWidth: `${cardStyle.borderWidth}px`,
     borderColor: cardStyle.borderColor,
     boxShadow: cardStyle.shadow,
-    padding: '2rem',
+    padding: `${cardStyle.contentPadding}px`,
     paddingTop: 0,
     paddingBottom: 0,
     paddingLeft: 0,
@@ -224,7 +257,7 @@ const Card = ({
     <div 
       style={{ 
         width: width * scale, 
-        height: height * scale,
+        height: cardStyle.autoHeight ? 'auto' : height * scale,
         transition: 'all 0.3s ease'
       }} 
       className="relative flex-shrink-0"
@@ -232,7 +265,7 @@ const Card = ({
       <div 
         style={{ 
           width: width, 
-          height: height,
+          height: cardStyle.autoHeight ? 'auto' : height,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
           transition: 'transform 0.3s ease'
@@ -322,38 +355,78 @@ const Card = ({
             ))}
 
             <div className="relative z-10 h-full flex flex-col pointer-events-none">
-              <div className="prose prose-sm max-w-none flex-1 pointer-events-auto p-8 overflow-hidden">
+              <div 
+                className="prose prose-sm max-w-none flex-1 pointer-events-auto overflow-hidden break-words"
+                style={{ 
+                  padding: `${Math.max(cardStyle.contentPadding, 24)}px`,
+                  paddingBottom: cardStyle.autoHeight ? `${Math.max(cardStyle.contentPadding, 24)}px` : '4px',
+                  maxHeight: cardStyle.autoHeight ? 'none' : '100%' // Ensure strict clipping to prevent overlap
+                }}
+              >
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   components={{
                       h1: ({...props}) => (
-                        <div className="flex flex-col items-center mb-8 first:mt-0 mt-8">
-                          <h1 style={{color: cardStyle.h1Color || cardStyle.textColor}} className="text-3xl font-bold mb-2 text-center" {...props} />
-                          <div className="h-1 w-24 rounded-full" style={{backgroundColor: cardStyle.h1LineColor || cardStyle.accentColor}} />
-                        </div>
-                      ),
-                      h2: ({...props}) => (
-                        <div className="flex justify-center mb-6 mt-8 first:mt-0">
-                          <h2 
-                            style={{
-                              backgroundColor: cardStyle.h2BackgroundColor || cardStyle.accentColor, 
-                              color: cardStyle.h2Color || '#fff'
-                            }} 
-                            className="text-lg font-bold px-4 py-1.5 shadow-md rounded-lg" 
-                            {...props} 
-                          />
-                        </div>
-                      ),
-                      h3: ({...props}) => (
-                        <h3 
-                          style={{
-                            color: cardStyle.h3Color || cardStyle.textColor,
-                            borderLeftColor: cardStyle.h3LineColor || cardStyle.accentColor
-                          }} 
-                          className="text-xl font-bold mb-4 mt-6 first:mt-0 pl-3 border-l-4" 
-                          {...props} 
-                        />
-                      ),
+                  <div className="flex flex-col items-center mb-8 first:mt-0 mt-8">
+                    <h1 style={{color: cardStyle.h1Color || cardStyle.textColor, fontSize: `${cardStyle.h1FontSize}px`}} className="font-bold mb-2 text-center" {...props} />
+                    <div className="h-1 w-24 rounded-full" style={{backgroundColor: cardStyle.h1LineColor || cardStyle.accentColor}} />
+                  </div>
+                ),
+                h2: ({...props}) => (
+                  <div className="flex justify-center mb-6 mt-8 first:mt-0">
+                    <h2 
+                      style={{
+                        backgroundColor: cardStyle.h2BackgroundColor || cardStyle.accentColor, 
+                        color: cardStyle.h2Color || '#fff',
+                        fontSize: `${cardStyle.h2FontSize}px`
+                      }} 
+                      className="font-bold px-4 py-1.5 shadow-md rounded-lg" 
+                      {...props} 
+                    />
+                  </div>
+                ),
+                h3: ({...props}) => (
+                  <h3 
+                    style={{
+                      color: cardStyle.h3Color || cardStyle.textColor,
+                      borderLeftColor: cardStyle.h3LineColor || cardStyle.accentColor,
+                      fontSize: `${cardStyle.h3FontSize}px`
+                    }} 
+                    className="font-bold mb-4 mt-6 first:mt-0 pl-3 border-l-4" 
+                    {...props} 
+                  />
+                ),
+                h4: ({...props}) => (
+                   <h4
+                    style={{
+                      color: cardStyle.textColor,
+                      fontSize: `${cardStyle.headingScale * 1.125}rem`
+                    }}
+                    className="font-bold mb-2 mt-4 first:mt-0"
+                    {...props}
+                   />
+                ),
+                h5: ({...props}) => (
+                   <h5
+                    style={{
+                      color: cardStyle.textColor,
+                      fontSize: `${cardStyle.headingScale * 1}rem`
+                    }}
+                    className="font-bold mb-2 mt-4 first:mt-0"
+                    {...props}
+                   />
+                ),
+                h6: ({...props}) => (
+                   <h6
+                    style={{
+                      color: cardStyle.textColor,
+                      fontSize: `${cardStyle.headingScale * 0.875}rem`
+                    }}
+                    className="font-bold mb-2 mt-4 first:mt-0 opacity-80"
+                    {...props}
+                   />
+                ),
+                del: ({...props}) => <del style={{color: cardStyle.textColor, opacity: 0.7}} {...props} />,
                       p: ({...props}) => (
                         <p style={{color: cardStyle.textColor}} className="mb-4 leading-relaxed opacity-90 first:mt-0" {...props} />
                       ),
@@ -373,11 +446,11 @@ const Card = ({
                             borderLeftColor: cardStyle.blockquoteBorderColor, 
                             backgroundColor: cardStyle.blockquoteBackgroundColor 
                           }} 
-                          className="border-l-4 pl-4 py-2 my-4 italic opacity-90 rounded-r-lg rounded-bl-sm [&>p:last-child]:mb-0" 
+                          className="border-l-4 pl-4 py-2 my-4 italic opacity-90 rounded-r-lg rounded-bl-sm [&>p:last-child]:mb-0 break-words" 
                           {...props} 
                         />
                       ),
-                      a: ({...props}) => <a style={{color: cardStyle.accentColor}} className="underline decoration-auto underline-offset-2" {...props} />,
+                      a: ({...props}) => <a style={{color: cardStyle.accentColor}} className="underline decoration-auto underline-offset-2 break-all" {...props} />,
                       img: ({ src, alt, ...props }: { src?: string; alt?: string }) => {
                         if (src === 'spacer') {
                           return <div className="w-full" style={{ height: '200px' }} />;
@@ -424,40 +497,45 @@ const Card = ({
                   {content}
                 </ReactMarkdown>
               </div>
-              
-              {/* Footer (Watermark & Page Number) */}
-              <div className="flex-shrink-0 w-full px-8 pb-4 pt-2 flex items-center relative opacity-60 font-mono uppercase tracking-widest pointer-events-none text-[10px] h-8">
-                {/* Left */}
-                <div className="absolute left-8 flex items-center gap-4">
-                  {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'left' && (
-                      <span className="font-bold">{index + 1}</span>
-                  )}
-                  {cardStyle.watermark.enabled && cardStyle.watermark.position === 'left' && (
-                      <span>{cardStyle.watermark.content}</span>
-                  )}
-                </div>
 
-                {/* Center */}
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
-                  {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'center' && (
-                      <span className="font-bold">{index + 1}</span>
-                  )}
-                  {cardStyle.watermark.enabled && cardStyle.watermark.position === 'center' && (
-                      <span>{cardStyle.watermark.content}</span>
-                  )}
-                </div>
+              {/* Footer (Watermark & Page Number) - Fixed height to prevent overlap */}
+              {(cardStyle.pageNumber.enabled || cardStyle.watermark.enabled) && (
+                <div 
+                  className="w-full px-8 pb-4 pt-2 flex items-center opacity-60 font-mono uppercase tracking-widest pointer-events-auto text-[10px] h-10 flex-shrink-0 relative"
+                >
+                  {/* Left */}
+                  <div className="absolute left-8 flex items-center gap-4">
+                    {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'left' && (
+                        <span className="font-bold">{index + 1}</span>
+                    )}
+                    {cardStyle.watermark.enabled && cardStyle.watermark.position === 'left' && (
+                        <span>{cardStyle.watermark.content}</span>
+                    )}
+                  </div>
 
-                {/* Right */}
-                <div className="absolute right-8 flex items-center gap-4">
-                  {cardStyle.watermark.enabled && cardStyle.watermark.position === 'right' && (
-                      <span>{cardStyle.watermark.content}</span>
-                  )}
-                  {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'right' && (
-                      <span className="font-bold">{index + 1}</span>
-                  )}
+                  {/* Center */}
+                  <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
+                    {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'center' && (
+                        <span className="font-bold">{index + 1}</span>
+                    )}
+                    {cardStyle.watermark.enabled && cardStyle.watermark.position === 'center' && (
+                        <span>{cardStyle.watermark.content}</span>
+                    )}
+                  </div>
+
+                  {/* Right */}
+                  <div className="absolute right-8 flex items-center gap-4">
+                    {cardStyle.watermark.enabled && cardStyle.watermark.position === 'right' && (
+                        <span>{cardStyle.watermark.content}</span>
+                    )}
+                    {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'right' && (
+                        <span className="font-bold">{index + 1}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
+
           </div>
         </motion.div>
       </div>

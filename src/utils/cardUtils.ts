@@ -4,7 +4,7 @@ export const getCardDimensions = (cardStyle: CardStyle) => {
   let width = cardStyle.width || 800;
   let height = cardStyle.height || 600;
 
-  if (cardStyle.aspectRatio !== 'custom') {
+  if (cardStyle.aspectRatio !== 'custom' && !cardStyle.autoHeight) {
     const [w, h] = cardStyle.aspectRatio.split(':').map(Number);
     const baseSize = 500; // Base width for preview scaling
     

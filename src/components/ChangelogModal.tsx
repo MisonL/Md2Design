@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon } from 'lucide-react';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
@@ -19,6 +19,37 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
 
   // Update data
   const updates = [
+    {
+      version: 'v1.7.0',
+      date: '2025-12-29',
+      title: {
+        en: 'Smart Pagination & Auto Height',
+        zh: '智能自动分页 & 自动高度'
+      },
+      changes: {
+        en: [
+          'Added "Auto Pagination" star button to toolbar for one-click content splitting',
+          'New "Auto Height" mode allows cards to grow vertically based on content',
+          'Independent heading styles: customize font size and color for H1, H2, and H3',
+          'Added preview zoom slider and support for Ctrl/Command+Scroll shortcut zoom',
+          'Support for card padding adjustment',
+          'Support for strikethrough syntax and new editor toolbar shortcuts',
+          'Improved pagination algorithm with precise CJK character height estimation',
+          'Enhanced semantic block splitting to minimize empty space in cards',
+        ],
+        zh: [
+          '工具栏新增“自动分页”星形按钮，一键智能分割长文本',
+          '新增“自动高度”模式，卡片长度随内容自动增长',
+          '标题样式独立化：支持为 H1、H2、H3 分别设置字号、颜色及装饰线',
+          '新增预览窗口缩放滑条，同时支持 Ctrl/Command+滚轮的快捷缩放',
+          '支持卡片内边距调整',
+          '支持删除线语法，并新增编辑器快捷工具',
+          '优化分页算法：引入精确的中文字符高度估算，分页更精准',
+          '增强语义化分块：基于块级元素进行分页，最大限度减少底部留白',
+        ]
+      },
+      demo: 'v170-features'
+    },
     {
       version: 'v1.6.0',
       date: '2025-12-28',
@@ -306,6 +337,18 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                               {language === 'zh' ? '功能演示' : 'Feature Demo'}
                             </h3>
                          </div>
+
+                         {currentUpdate.demo === 'v170-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[500px] flex flex-col items-center gap-12">
+                              <DemoSmartPagination />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoAutoHeight />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoPreviewZoom />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoCardPadding />
+                           </div>
+                         )}
 
                          {currentUpdate.demo === 'export-naming' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/5 shadow-inner min-h-[400px] flex flex-col items-center justify-center gap-8">
@@ -1270,6 +1313,367 @@ const DemoResponsiveLayout = () => {
         >
           {language === 'zh' ? '侧边栏' : 'Sidebar'}
         </button>
+      </div>
+    </div>
+  );
+};
+
+const DemoAutoHeight = () => {
+  const { language } = useStore();
+  const [mode, setMode] = useState<'portrait' | 'landscape' | 'auto'>('portrait');
+  
+  const isZh = language === 'zh';
+  
+  return (
+    <div className="w-full flex flex-col items-center gap-6">
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        {isZh ? '自动高度 vs 固定比例' : 'Auto Height vs Fixed Aspect Ratio'}
+      </div>
+
+      <div className="flex items-center gap-1 bg-white dark:bg-white/5 p-1 rounded-xl border border-black/5 dark:border-white/10 shadow-sm">
+        {[
+          { id: 'portrait', label: isZh ? '竖屏' : 'Portrait' },
+          { id: 'landscape', label: isZh ? '横屏' : 'Landscape' },
+          { id: 'auto', label: isZh ? '自动高度' : 'Auto Height' }
+        ].map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setMode(m.id as any)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              mode === m.id 
+                ? 'bg-blue-500 text-white shadow-md' 
+                : 'text-slate-500 hover:bg-black/5 dark:hover:bg-white/5'
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="w-full max-w-lg flex justify-center items-center min-h-[300px] p-8 bg-slate-200/30 dark:bg-white/5 rounded-2xl border border-black/5 relative overflow-hidden">
+        <motion.div 
+          animate={{ 
+            width: mode === 'landscape' ? 240 : 160,
+            height: mode === 'auto' ? 'auto' : (mode === 'landscape' ? 150 : 220),
+          }}
+          transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+          className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-black/5 dark:border-white/10 p-5 flex flex-col gap-3 overflow-hidden relative"
+        >
+          {/* Mock Content */}
+          <div className="w-12 h-2 bg-blue-500/40 rounded-full shrink-0" />
+          <div className="space-y-2 shrink-0">
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+            <div className="w-2/3 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+          </div>
+          
+          <AnimatePresence mode="wait">
+            {mode === 'auto' ? (
+              <motion.div 
+                key="auto-content"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-3 pt-2"
+              >
+                <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-5/6 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-4/6 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-3/6 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="fixed-content"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col justify-end"
+              >
+                <div className="w-full py-4 border-t border-dashed border-black/10 dark:border-white/10 flex items-center justify-center">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                    {mode === 'portrait' ? 'Fixed 3:4' : 'Fixed 16:10'}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Footer */}
+          <div className="mt-auto pt-4 flex justify-between items-center opacity-20 shrink-0">
+            <div className="w-10 h-1 bg-black/20 dark:bg-white/20 rounded-full" />
+            <div className="text-[8px] font-bold">1</div>
+          </div>
+
+          {/* Cut-off indicator for fixed modes */}
+          {mode !== 'auto' && (
+            <div className="absolute bottom-10 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-[#1a1a1a] to-transparent pointer-events-none" />
+          )}
+        </motion.div>
+
+        {/* Info Label */}
+        <div className="absolute bottom-4 right-4 bg-black/80 text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-lg">
+           {mode === 'auto' 
+             ? (isZh ? '高度随内容自动撑开' : 'Height grows with content')
+             : (isZh ? '固定高度 (内容可能被截断)' : 'Fixed Height (Content may be cut off)')}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoPreviewZoom = () => {
+  const { language } = useStore();
+  const [zoom, setZoom] = useState(1);
+  
+  return (
+    <div className="w-full flex flex-col items-center gap-6">
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        {language === 'zh' ? '预览缩放演示 (滑条 & 快捷键)' : 'Preview Zoom Demo (Slider & Shortcuts)'}
+      </div>
+
+      <div className="w-full max-w-xs flex items-center gap-4 bg-white dark:bg-white/5 p-3 rounded-xl border border-black/5 dark:border-white/10 shadow-sm">
+        <Maximize2 size={14} className="opacity-50" />
+        <input 
+          type="range" 
+          min={0.5} 
+          max={1.5} 
+          step={0.1}
+          value={zoom}
+          onChange={(e) => setZoom(parseFloat(e.target.value))}
+          className="flex-1 accent-blue-500 h-1.5 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer"
+        />
+        <span className="text-xs font-mono font-bold min-w-[4ch]">{Math.round(zoom * 100)}%</span>
+      </div>
+
+      <div className="w-full max-w-lg aspect-[16/9] bg-slate-200/30 dark:bg-white/5 rounded-2xl border border-black/5 overflow-hidden flex items-center justify-center relative">
+        <motion.div 
+          animate={{ scale: zoom }}
+          className="w-40 h-56 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-black/5 dark:border-white/10 p-5 flex flex-col gap-3"
+        >
+          <div className="w-10 h-2 bg-blue-500/40 rounded-full" />
+          <div className="space-y-2 mt-2">
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+            <div className="w-4/5 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+          </div>
+        </motion.div>
+        
+        <div className="absolute bottom-4 left-4 flex gap-2">
+          <kbd className="px-2 py-1 bg-white dark:bg-black/40 rounded text-[10px] font-bold shadow-sm border border-black/5">Ctrl</kbd>
+          <span className="text-[10px] font-bold">+</span>
+          <div className="px-2 py-1 bg-white dark:bg-black/40 rounded text-[10px] font-bold shadow-sm border border-black/5 flex items-center gap-1">
+             <div className="w-2 h-3 border border-black/20 dark:border-white/20 rounded-sm relative">
+                <motion.div 
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="absolute top-0.5 left-0.5 w-1 h-1 bg-blue-500 rounded-full"
+                />
+             </div>
+             <span>Wheel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoCardPadding = () => {
+  const { language } = useStore();
+  const [padding, setPadding] = useState(24);
+  
+  return (
+    <div className="w-full flex flex-col items-center gap-6">
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        {language === 'zh' ? '卡片内边距调整演示' : 'Card Padding Adjustment Demo'}
+      </div>
+
+      <div className="w-full max-w-xs flex items-center gap-4 bg-white dark:bg-white/5 p-3 rounded-xl border border-black/5 dark:border-white/10 shadow-sm">
+        <Layout size={14} className="opacity-50" />
+        <input 
+          type="range" 
+          min={0} 
+          max={60} 
+          value={padding}
+          onChange={(e) => setPadding(parseInt(e.target.value))}
+          className="flex-1 accent-blue-500 h-1.5 bg-black/10 dark:border-white/10 rounded-lg appearance-none cursor-pointer"
+        />
+        <span className="text-xs font-mono font-bold min-w-[3ch]">{padding}px</span>
+      </div>
+
+      <div className="w-full max-w-lg aspect-[16/9] bg-slate-200/30 dark:bg-white/5 rounded-2xl border border-black/5 flex items-center justify-center">
+        <div className="w-48 h-64 bg-slate-300 dark:bg-slate-800 rounded-xl relative overflow-hidden shadow-lg">
+           {/* Inner Card representing content area */}
+           <motion.div 
+             animate={{ 
+               top: padding / 2,
+               left: padding / 2,
+               right: padding / 2,
+               bottom: padding / 2
+             }}
+             className="absolute bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm p-4 flex flex-col gap-2"
+           >
+              <div className="w-8 h-2 bg-blue-500/40 rounded-full" />
+              <div className="space-y-1.5">
+                <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                <div className="w-3/4 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+              </div>
+           </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoSmartPagination = () => {
+  const { language } = useStore();
+  const [isPaginating, setIsPaginating] = useState(false);
+  const [cards, setCards] = useState<string[]>([]);
+  
+  const handlePaginate = () => {
+    setIsPaginating(true);
+    setCards([]);
+    
+    // Simulate pagination process
+    setTimeout(() => {
+      const splitText = language === 'zh'
+        ? ["Page 1", "Page 2", "Page 3"]
+        : ["Page 1", "Page 2", "Page 3"];
+      setCards(splitText);
+      setIsPaginating(false);
+    }, 800);
+  };
+
+  return (
+    <div className="w-full flex flex-col items-center gap-6">
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        {language === 'zh' ? '智能自动分页演示' : 'Smart Auto-Pagination Demo'}
+      </div>
+
+      <div className="relative w-full max-w-lg aspect-[16/10] bg-slate-200/50 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden p-6 flex flex-col gap-4">
+        {/* Mock Toolbar */}
+        <div className="flex items-center gap-2 p-2 bg-white dark:bg-black/40 rounded-xl shadow-sm border border-black/5 dark:border-white/10">
+          <div className="w-4 h-4 rounded bg-slate-200 dark:bg-white/10" />
+          <div className="w-4 h-4 rounded bg-slate-200 dark:bg-white/10" />
+          <div className="w-[1px] h-4 bg-black/10 dark:bg-white/10 mx-1" />
+          <button 
+            onClick={handlePaginate}
+            disabled={isPaginating}
+            className={`p-1.5 rounded-lg transition-all ${isPaginating ? 'bg-blue-500/20' : 'hover:bg-blue-500/10 active:scale-95 group'}`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={isPaginating ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}>
+              <path 
+                d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" 
+                fill="url(#star-gradient-demo)"
+                stroke="url(#star-gradient-demo)"
+                strokeWidth="1.5"
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+              <defs>
+                <linearGradient id="star-gradient-demo" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#93C5FD" />
+                  <stop offset="0.5" stopColor="#60A5FA" />
+                  <stop offset="1" stopColor="#3B82F6" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </button>
+          <div className="ml-auto text-[10px] font-bold text-blue-500/60 uppercase tracking-tighter">
+            {language === 'zh' ? '点击星标体验' : 'Click Star to Start'}
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 relative overflow-hidden flex gap-4 justify-center items-center">
+          <AnimatePresence mode="wait">
+            {!cards.length ? (
+              <motion.div 
+                key="original"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-48 h-64 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-xl border border-black/5 dark:border-white/10 p-4 flex flex-col gap-2 overflow-hidden"
+              >
+                <div className="w-12 h-2 bg-blue-500/40 rounded-full" />
+                <div className="space-y-1.5 mt-2">
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-5/6 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                </div>
+                <div className="w-8 h-2 bg-purple-500/30 rounded-full mt-2" />
+                <div className="space-y-1.5">
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                  <div className="w-2/3 h-1.5 bg-black/5 dark:bg-white/10 rounded-full" />
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex gap-3 h-full items-center">
+                {cards.map((_, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ delay: i * 0.15, type: "spring", damping: 12 }}
+                    className="w-28 h-40 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-black/5 dark:border-white/10 p-3 flex flex-col gap-1.5 overflow-hidden"
+                  >
+                    <div className="w-8 h-1.5 bg-blue-500/40 rounded-full" />
+                    <div className="space-y-1 mt-1">
+                      <div className="w-full h-1 bg-black/5 dark:bg-white/10 rounded-full" />
+                      <div className="w-full h-1 bg-black/5 dark:bg-white/10 rounded-full" />
+                      <div className="w-5/6 h-1 bg-black/5 dark:bg-white/10 rounded-full" />
+                    </div>
+                    {i > 0 && <div className="w-6 h-1.5 bg-purple-500/30 rounded-full mt-1" />}
+                    {i > 0 && (
+                      <div className="space-y-1">
+                        <div className="w-full h-1 bg-black/5 dark:bg-white/10 rounded-full" />
+                        <div className="w-2/3 h-1 bg-black/5 dark:bg-white/10 rounded-full" />
+                      </div>
+                    )}
+                    <div className="mt-auto flex justify-center">
+                      <div className="text-[6px] font-bold opacity-20">{i + 1}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </AnimatePresence>
+
+          {isPaginating && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/10 dark:bg-black/10 backdrop-blur-[1px] z-10">
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              >
+                <Sparkles size={24} className="text-blue-500" />
+              </motion.div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 p-4 bg-purple-500/5 rounded-2xl border border-purple-500/10 w-full max-w-md">
+         <div className="p-2 bg-purple-500/10 rounded-xl text-purple-500">
+           <Layout size={20} />
+         </div>
+         <div className="flex-1">
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              {language === 'zh' ? '语义化智能分页' : 'Semantic Smart Pagination'}
+            </div>
+            <div className="text-[10px] text-slate-500 leading-relaxed">
+              {language === 'zh' 
+                ? '基于内容块的智能识别，自动避开标题和列表的中间截断，让卡片排版更美观。' 
+                : 'Intelligently identifies content blocks to avoid cutting off headings or lists, making card layouts more beautiful.'}
+            </div>
+         </div>
       </div>
     </div>
   );
