@@ -135,7 +135,7 @@ export const Editor = () => {
         });
       } else {
         // Adding
-        lines.forEach((line, idx) => {
+        lines.forEach((_, idx) => {
           const lineAbsoluteStart = lineStart + lines.slice(0, idx).join('\n').length + (idx > 0 ? 1 : 0);
           if (lineAbsoluteStart <= start) {
             newStart += markerWithSpace.length;
