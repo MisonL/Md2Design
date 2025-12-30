@@ -58,10 +58,24 @@ if %errorlevel% neq 0 (
 ) 
 
 echo. 
+echo 5. Building Local Desktop App (Tauri)... 
+call npm run tauri build
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [WARNING] Tauri build failed! 
+    echo Online version was pushed, but local EXE was not created.
+) else (
+    echo.
+    echo [SUCCESS] Local EXE created successfully!
+    echo You can find it in: src-tauri\target\release\bundle\msi\
+)
+
+echo. 
 echo ======================================================== 
-echo Success! Your changes have been pushed. 
+echo Success! Your changes have been pushed and local build finished. 
 echo Please wait 1-3 minutes for GitHub Pages to update. 
-echo You can check progress at: `https://github.com/LuN3cy/Md2Design/actions`  
+echo You can check progress at: https://github.com/LuN3cy/Md2Design/actions  
 echo ======================================================== 
 echo. 
 pause

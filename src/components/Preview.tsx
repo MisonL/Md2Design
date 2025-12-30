@@ -501,35 +501,36 @@ const Card = ({
               {/* Footer (Watermark & Page Number) - Fixed height to prevent overlap */}
               {(cardStyle.pageNumber.enabled || cardStyle.watermark.enabled) && (
                 <div 
-                  className="w-full px-8 pb-4 pt-2 flex items-center opacity-60 font-mono uppercase tracking-widest pointer-events-auto text-[10px] h-10 flex-shrink-0 relative"
+                  className="w-full px-8 pb-4 pt-2 flex items-center font-mono uppercase tracking-widest pointer-events-auto h-10 flex-shrink-0 relative"
+                  style={{ color: cardStyle.textColor }}
                 >
                   {/* Left */}
                   <div className="absolute left-8 flex items-center gap-4">
                     {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'left' && (
-                        <span className="font-bold">{index + 1}</span>
+                        <span style={{ opacity: cardStyle.pageNumber.opacity, fontSize: `${cardStyle.pageNumber.fontSize}px` }} className="font-bold">{index + 1}</span>
                     )}
                     {cardStyle.watermark.enabled && cardStyle.watermark.position === 'left' && (
-                        <span>{cardStyle.watermark.content}</span>
+                        <span style={{ opacity: cardStyle.watermark.opacity, fontSize: `${cardStyle.watermark.fontSize}px` }}>{cardStyle.watermark.content}</span>
                     )}
                   </div>
 
                   {/* Center */}
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
                     {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'center' && (
-                        <span className="font-bold">{index + 1}</span>
+                        <span style={{ opacity: cardStyle.pageNumber.opacity, fontSize: `${cardStyle.pageNumber.fontSize}px` }} className="font-bold">{index + 1}</span>
                     )}
                     {cardStyle.watermark.enabled && cardStyle.watermark.position === 'center' && (
-                        <span>{cardStyle.watermark.content}</span>
+                        <span style={{ opacity: cardStyle.watermark.opacity, fontSize: `${cardStyle.watermark.fontSize}px` }}>{cardStyle.watermark.content}</span>
                     )}
                   </div>
 
                   {/* Right */}
                   <div className="absolute right-8 flex items-center gap-4">
                     {cardStyle.watermark.enabled && cardStyle.watermark.position === 'right' && (
-                        <span>{cardStyle.watermark.content}</span>
+                        <span style={{ opacity: cardStyle.watermark.opacity, fontSize: `${cardStyle.watermark.fontSize}px` }}>{cardStyle.watermark.content}</span>
                     )}
                     {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'right' && (
-                        <span className="font-bold">{index + 1}</span>
+                        <span style={{ opacity: cardStyle.pageNumber.opacity, fontSize: `${cardStyle.pageNumber.fontSize}px` }} className="font-bold">{index + 1}</span>
                     )}
                   </div>
                 </div>

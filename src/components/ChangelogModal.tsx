@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout } from 'lucide-react';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
@@ -19,6 +19,31 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
 
   // Update data
   const updates = [
+    {
+      version: 'v1.7.1',
+      date: '2025-12-30',
+      title: {
+        en: 'Enhanced Customization & Fixes',
+        zh: '水印字号调整 & 问题修复'
+      },
+      changes: {
+        en: [
+          'Added font size adjustment for page numbers and watermarks',
+          'Added opacity control for page numbers',
+          'Improved blockquote styling: removed extra top spacing',
+          'Enhanced editor: support for multi-line list selection and toggling',
+          'Integrated Tauri build into deployment process',
+        ],
+        zh: [
+          '新增页码和水印字号调整功能',
+          '新增页码不透明度调节功能',
+          '优化引用块样式：移除了顶部的多余空白',
+          '增强编辑器：支持多行列表的同时选择与切换',
+          '自动化部署：集成 Tauri 桌面端打包流程',
+        ]
+      },
+      demo: 'v171-features'
+    },
     {
       version: 'v1.7.0',
       date: '2025-12-29',
@@ -338,6 +363,14 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                             </h3>
                          </div>
 
+                         {currentUpdate.demo === 'v171-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoFooterCustomization />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoMultiLineList />
+                           </div>
+                         )}
+
                          {currentUpdate.demo === 'v170-features' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[500px] flex flex-col items-center gap-12">
                               <DemoSmartPagination />
@@ -404,6 +437,200 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+};
+
+const DemoFooterCustomization = () => {
+  const { language } = useStore();
+  const [watermark, setWatermark] = useState({ fontSize: 10, opacity: 0.1, position: 'center' as 'left' | 'center' | 'right' });
+  const [pageNumber, setPageNumber] = useState({ fontSize: 10, opacity: 0.6, position: 'center' as 'left' | 'center' | 'right' });
+  const [activeTab, setActiveTab] = useState<'watermark' | 'pageNumber'>('pageNumber');
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '页码 & 水印独立自定义' : 'Independent Footer Customization'}
+      </div>
+
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm space-y-6">
+        {/* Tab Switcher */}
+        <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-xl">
+          <button
+            onClick={() => setActiveTab('pageNumber')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+              activeTab === 'pageNumber' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'
+            }`}
+          >
+            {language === 'zh' ? '页码设置' : 'Page Number'}
+          </button>
+          <button
+            onClick={() => setActiveTab('watermark')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+              activeTab === 'watermark' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'
+            }`}
+          >
+            {language === 'zh' ? '水印设置' : 'Watermark'}
+          </button>
+        </div>
+
+        {/* Active Tab Controls */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
+              <span>{language === 'zh' ? '字号' : 'Font Size'}</span>
+              <span>{activeTab === 'pageNumber' ? pageNumber.fontSize : watermark.fontSize}px</span>
+            </div>
+            <input 
+              type="range" min="6" max="24" 
+              value={activeTab === 'pageNumber' ? pageNumber.fontSize : watermark.fontSize} 
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                if (activeTab === 'pageNumber') setPageNumber({ ...pageNumber, fontSize: val });
+                else setWatermark({ ...watermark, fontSize: val });
+              }}
+              className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
+              <span>{language === 'zh' ? '不透明度' : 'Opacity'}</span>
+              <span>{Math.round((activeTab === 'pageNumber' ? pageNumber.opacity : watermark.opacity) * 100)}%</span>
+            </div>
+            <input 
+              type="range" min="0" max="1" step="0.05" 
+              value={activeTab === 'pageNumber' ? pageNumber.opacity : watermark.opacity} 
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (activeTab === 'pageNumber') setPageNumber({ ...pageNumber, opacity: val });
+                else setWatermark({ ...watermark, opacity: val });
+              }}
+              className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase block">{language === 'zh' ? '位置' : 'Position'}</span>
+            <div className="flex bg-black/5 dark:bg-white/5 rounded-lg p-1">
+              {(['left', 'center', 'right'] as const).map((pos) => {
+                const isActive = (activeTab === 'pageNumber' ? pageNumber.position : watermark.position) === pos;
+                return (
+                  <button
+                    key={pos}
+                    onClick={() => {
+                      if (activeTab === 'pageNumber') setPageNumber({ ...pageNumber, position: pos });
+                      else setWatermark({ ...watermark, position: pos });
+                    }}
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all capitalize ${
+                      isActive ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'
+                    }`}
+                  >
+                    {pos}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Real-time Preview Area */}
+        <div className="pt-4 border-t border-black/5 dark:border-white/5">
+          <div className="text-[10px] font-bold text-slate-400 uppercase mb-3 text-center">{language === 'zh' ? '实时预览 (底部栏)' : 'Real-time Preview (Footer)'}</div>
+          <div className="relative h-16 bg-slate-50 dark:bg-black/20 rounded-xl border border-dashed border-black/10 dark:border-white/10 flex items-center px-4 overflow-hidden">
+            {/* Watermark Preview */}
+            <div 
+              className="absolute transition-all duration-300 font-mono"
+              style={{ 
+                left: watermark.position === 'left' ? '1rem' : watermark.position === 'center' ? '50%' : 'auto',
+                right: watermark.position === 'right' ? '1rem' : 'auto',
+                transform: watermark.position === 'center' ? 'translateX(-50%)' : 'none',
+                fontSize: `${watermark.fontSize}px`,
+                opacity: watermark.opacity,
+                color: 'currentColor'
+              }}
+            >
+              MD2DESIGN
+            </div>
+            
+            {/* Page Number Preview */}
+            <div 
+              className="absolute transition-all duration-300 font-mono font-bold"
+              style={{ 
+                left: pageNumber.position === 'left' ? '1rem' : pageNumber.position === 'center' ? '50%' : 'auto',
+                right: pageNumber.position === 'right' ? '1rem' : 'auto',
+                transform: pageNumber.position === 'center' ? 'translateX(-50%)' : 'none',
+                fontSize: `${pageNumber.fontSize}px`,
+                opacity: pageNumber.opacity,
+                color: 'currentColor'
+              }}
+            >
+              1
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoMultiLineList = () => {
+  const { language } = useStore();
+  const [isList, setIsList] = useState(false);
+  const lines = [
+    language === 'zh' ? '第一行内容' : 'First line of content',
+    language === 'zh' ? '第二行内容' : 'Second line of content',
+    language === 'zh' ? '第三行内容' : 'Third line of content',
+  ];
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '多行列表切换' : 'Multi-line List Toggle'}
+      </div>
+
+      <div className="bg-white dark:bg-[#151515] rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+        {/* Editor-like Toolbar */}
+        <div className="px-4 py-2 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsList(!isList)}
+              className={`p-1.5 rounded transition-all flex items-center gap-2 ${
+                isList ? 'bg-blue-500/10 text-blue-600' : 'hover:bg-black/5 dark:hover:bg-white/5 text-slate-400'
+              }`}
+            >
+              <List size={14} />
+            </button>
+            <div className="w-px h-4 bg-black/10 dark:bg-white/10" />
+            <div className="flex gap-1">
+              <div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-white/10" />
+              <div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-white/10" />
+            </div>
+          </div>
+          <div className="text-[10px] font-mono text-slate-400 opacity-60">Markdown Editor</div>
+        </div>
+
+        {/* Editor-like Content Area */}
+        <div className="p-6 font-mono text-xs space-y-1.5 min-h-[120px] bg-white dark:bg-[#151515]">
+          {lines.map((line, i) => (
+            <motion.div 
+              key={i} 
+              layout
+              className="flex items-center gap-2"
+            >
+              <span className={isList ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500'}>
+                {isList ? `- ${line}` : line}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-[10px] text-center text-slate-400 px-8 leading-relaxed">
+        {language === 'zh' 
+          ? '现在支持在编辑器中一次性选中多行文本，并点击工具栏按钮一键添加/取消列表前缀。' 
+          : 'Now supports selecting multiple lines in the editor and toggling list prefixes for all of them at once.'}
+      </p>
+    </div>
   );
 };
 

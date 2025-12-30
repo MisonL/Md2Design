@@ -114,12 +114,15 @@ export type CardStyle = {
     content: string;
     position: 'left' | 'center' | 'right';
     opacity: number;
+    fontSize: number;
   };
 
   // Page Number
   pageNumber: {
     enabled: boolean;
     position: 'left' | 'center' | 'right';
+    opacity: number;
+    fontSize: number;
   };
 };
 
@@ -293,11 +296,14 @@ const INITIAL_CARD_STYLE: CardStyle = {
     enabled: false,
     content: 'Md2Design',
     position: 'center',
-    opacity: 0.1
+    opacity: 0.1,
+    fontSize: 10
   },
   pageNumber: {
     enabled: false,
-    position: 'center'
+    position: 'center',
+    opacity: 0.6,
+    fontSize: 10
   }
 };
 

@@ -1480,6 +1480,7 @@ export const Sidebar = () => {
                         </div>
 
                         <SliderControl label={t.opacity} value={cardStyle.watermark.opacity} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, opacity: val } })} />
+                        <SliderControl label={t.fontSize} value={cardStyle.watermark.fontSize} min={6} max={24} step={1} onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, fontSize: val } })} />
                       </div>
                     )}
                  </div>
@@ -1512,6 +1513,9 @@ export const Sidebar = () => {
                              ))}
                            </div>
                         </div>
+
+                        <SliderControl label={t.opacity} value={cardStyle.pageNumber.opacity} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, opacity: val } })} />
+                        <SliderControl label={t.fontSize} value={cardStyle.pageNumber.fontSize} min={6} max={24} step={1} onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, fontSize: val } })} />
                       </div>
                     )}
                  </div>
