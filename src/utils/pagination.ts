@@ -73,7 +73,6 @@ export const paginateMarkdown = (markdown: string, style: CardStyle): string => 
   
   // Calculate vertical padding
   const verticalPadding = style.cardPadding ? (style.cardPadding.top + style.cardPadding.bottom) : (style.contentPadding * 2);
-  const effectiveContentPadding = Math.max(verticalPadding / 2, 24); // Fallback logic kept for safety
   
   const hasFooter = style.pageNumber.enabled || style.watermark.enabled;
   const footerHeight = hasFooter ? 44 : 12; 

@@ -533,7 +533,7 @@ const DemoSliderIntegration = () => {
   const { language } = useStore();
   const [radius, setRadius] = useState(16);
   const [borderWidth, setBorderWidth] = useState(2);
-  const [borderColor, setBorderColor] = useState('#3b82f6');
+  const borderColor = '#3b82f6';
 
   return (
     <div className="w-full max-w-md space-y-8">

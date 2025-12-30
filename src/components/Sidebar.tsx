@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useStore, PRESET_GRADIENTS } from '../store';
 import { useTranslation } from '../i18n';
 import type { CardStyle, StylePreset } from '../store';
-import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw, Stamp, Upload, Trash2, LayoutPanelTop, Maximize2, X, ChevronUp, ChevronDown, Square, Frame } from 'lucide-react';
+import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw, Stamp, Upload, Trash2, LayoutPanelTop, Maximize2, X, Square, Frame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HexColorPicker } from 'react-colorful';
 import ReactMarkdown from 'react-markdown';
