@@ -7,7 +7,6 @@ import { PresetsManager } from './sidebar/PresetsManager';
 import { SidebarSection, AdvancedToggle } from './sidebar/SidebarSection';
 import { DraggableNumberInput, ColorPicker, ParameterIcon, MarginIcon, GradientPresets, CustomSelect } from './sidebar/SidebarControls';
 import { type LocalFont, injectLocalFontFace } from '../utils/fonts';
-import { ChevronDown } from 'lucide-react';
 
 const RatioIcon = ({ ratio, orientation }: { ratio: string, orientation: 'portrait' | 'landscape' }) => {
   if (ratio === 'custom') return <Layout size={14} className="opacity-70" />;

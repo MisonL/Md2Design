@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useStore, PRESET_GRADIENTS, type StylePreset, type CardStyle } from '../../store';
+import { useStore, type StylePreset, type CardStyle } from '../../store';
 import { useTranslation } from '../../i18n';
 import { Plus, Trash2, LayoutPanelTop, Maximize2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

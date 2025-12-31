@@ -23,7 +23,7 @@ function generateFontsJson() {
         );
       }
     },
-    handleHotUpdate({ file, server }) {
+    handleHotUpdate({ file, server }: { file: string; server: any }) {
       if (file.includes('public/fonts')) {
         const fontsDir = path.resolve(__dirname, 'public/fonts');
         const files = fs.readdirSync(fontsDir);
