@@ -505,7 +505,7 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       version: 3,
       migrate: (persistedState: unknown, version: number) => {
-        const state = persistedState as any;
+        const state = persistedState as Partial<AppState>;
         if (version === 0) {
           // Migration for v0 to v1: Add headingScale and contentPadding
           if (state.cardStyle) {
