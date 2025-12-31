@@ -311,34 +311,34 @@ export const Editor = () => {
 
             {/* Toolbar */}
             <div className="flex items-center gap-0.5 p-2 border-b border-black/10 dark:border-white/10 overflow-x-auto custom-scrollbar no-scrollbar">
-              <button onClick={() => toggleInlineStyle('**')} title="Bold" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => toggleInlineStyle('**')} title="Bold" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <Bold size={16} />
               </button>
-              <button onClick={() => toggleInlineStyle('*')} title="Italic" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => toggleInlineStyle('*')} title="Italic" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <Italic size={16} />
               </button>
-              <button onClick={() => toggleInlineStyle('~~')} title="Strikethrough" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => toggleInlineStyle('~~')} title="Strikethrough" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <Strikethrough size={16} />
               </button>
-              <button onClick={() => toggleBlockStyle('#')} title="H1" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => toggleBlockStyle('#')} title="H1" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <Heading1 size={16} />
               </button>
-              <button onClick={() => toggleBlockStyle('##')} title="H2" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => toggleBlockStyle('##')} title="H2" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <Heading2 size={16} />
               </button>
-              <button onClick={() => toggleBlockStyle('-')} title="List" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => toggleBlockStyle('-')} title="List" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <List size={16} />
               </button>
-              <button onClick={() => toggleBlockStyle('>')} title="Quote" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => toggleBlockStyle('>')} title="Quote" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <Quote size={16} />
               </button>
-              <button onClick={() => insertText('[', '](url)')} title="Link" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0">
+              <button onClick={() => insertText('[', '](url)')} title="Link" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
                 <Link size={16} />
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 title="Image"
-                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 flex-shrink-0"
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0"
               >
                 <ImageIcon size={16} />
               </button>
@@ -354,7 +354,7 @@ export const Editor = () => {
                   e.target.value = '';
                 }}
               />
-              <div className="w-[1px] h-4 bg-black/10 dark:bg-white/10 mx-1 flex-shrink-0" />
+              <div className="w-px h-4 bg-black/10 dark:bg-white/10 mx-1 shrink-0" />
               <button
                 onClick={() => {
                    // If in auto-height mode, switch to portrait first to enable pagination
@@ -375,7 +375,7 @@ export const Editor = () => {
                    }, 0);
                 }}
                 title="自动分页"
-                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-90 hover:opacity-100 group flex-shrink-0"
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-90 hover:opacity-100 group shrink-0"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path 
@@ -435,7 +435,7 @@ export const Editor = () => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70] bg-black/80 dark:bg-white/90 text-white dark:text-black px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 backdrop-blur-md"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-70 bg-black/80 dark:bg-white/90 text-white dark:text-black px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 backdrop-blur-md"
           >
             <div className="bg-green-500 rounded-full p-1">
               <Check size={14} className="text-white" strokeWidth={3} />
@@ -448,7 +448,7 @@ export const Editor = () => {
                 onClick={() => setShowPaginationToast(false)}
                 className="ml-2 opacity-50 hover:opacity-100 p-1"
             >
-                <ChevronLeft className="rotate-[-90deg]" size={14} />
+                <ChevronLeft className="-rotate-90" size={14} />
             </button>
           </motion.div>
         )}

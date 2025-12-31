@@ -255,7 +255,7 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8"
+          className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-8"
         >
           {/* Standard Backdrop with Noise for Banding Prevention */}
           <motion.div 
@@ -296,7 +296,7 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
             <div className="absolute inset-0 bg-white/40 dark:bg-[#0a0a0a]/90 -z-10" />
             
             {/* Left Sidebar: Version List */}
-            <div className="w-full md:w-64 flex-shrink-0 bg-black/5 dark:bg-white/5 border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 flex flex-col">
+            <div className="w-full md:w-64 shrink-0 bg-black/5 dark:bg-white/5 border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 flex flex-col">
                <div className="p-6 pb-4">
                   <div className="flex items-center gap-2 mb-1">
                     <Sparkles size={20} className="text-blue-500" />
@@ -914,7 +914,7 @@ const DemoMarkdown = () => {
         <div className="text-xs font-bold text-slate-500 uppercase">{language === 'zh' ? '卡片预览' : 'Card Preview'}</div>
         <div className="w-full h-full rounded-xl overflow-hidden relative shadow-xl group">
           {/* Card Background Mock */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900" />
+          <div className="absolute inset-0 bg-linear-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900" />
           
           {/* Card Content Mock */}
           <div className="absolute inset-4 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg overflow-y-auto custom-scrollbar">
@@ -980,12 +980,12 @@ const DemoExportNaming = () => {
         <AnimatePresence>
           {isOpen && (
             <>
-              <div className="fixed inset-0 z-[120]" onClick={() => setIsOpen(false)} />
+              <div className="fixed inset-0 z-120" onClick={() => setIsOpen(false)} />
               <motion.div
                 initial={{ opacity: 0, y: 4, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                className="absolute left-0 right-0 top-full mt-1 z-[121] bg-white dark:bg-[#1a1a1a] border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden py-1"
+                className="absolute left-0 right-0 top-full mt-1 z-121 bg-white dark:bg-[#1a1a1a] border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden py-1"
               >
                 {options.map((option) => (
                   <button
@@ -1398,7 +1398,7 @@ const DemoResetUndo = () => {
             className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl rounded-full px-6 py-4 flex items-center gap-6 w-full absolute"
           >
             {/* Countdown Circle */}
-            <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center">
+            <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
               <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
                 <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-black/5 dark:text-white/5" />
                 <motion.circle
@@ -1435,7 +1435,7 @@ const DemoResetUndo = () => {
               </button>
               <button
                 onClick={() => setShowToast(false)}
-                className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-black dark:text-white opacity-40 hover:opacity-100 flex-shrink-0"
+                className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-black dark:text-white opacity-40 hover:opacity-100 shrink-0"
               >
                 <Plus size={16} className="rotate-45" />
               </button>
@@ -1477,7 +1477,7 @@ const DemoPresets = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
+            className="fixed inset-0 z-120 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
             onClick={() => setPreviewIndex(null)}
           >
             <motion.div
@@ -1742,7 +1742,7 @@ const DemoResponsiveLayout = () => {
           {/* The Card */}
           <motion.div
             layout
-            className="w-24 aspect-[3/4] bg-white dark:bg-[#202020] rounded-lg shadow-lg border border-black/5 dark:border-white/10 flex flex-col p-2 gap-2 z-10"
+            className="w-24 aspect-3/4 bg-white dark:bg-[#202020] rounded-lg shadow-lg border border-black/5 dark:border-white/10 flex flex-col p-2 gap-2 z-10"
           >
             <div className="w-8 h-1 bg-blue-500 rounded-full" />
             <div className="space-y-1">
@@ -1896,7 +1896,7 @@ const DemoAutoHeight = () => {
 
           {/* Cut-off indicator for fixed modes */}
           {mode !== 'auto' && (
-            <div className="absolute bottom-10 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-[#1a1a1a] to-transparent pointer-events-none" />
+            <div className="absolute bottom-10 left-0 right-0 h-12 bg-linear-to-t from-white dark:from-[#1a1a1a] to-transparent pointer-events-none" />
           )}
         </motion.div>
 
@@ -1935,7 +1935,7 @@ const DemoPreviewZoom = () => {
         <span className="text-xs font-mono font-bold min-w-[4ch]">{Math.round(zoom * 100)}%</span>
       </div>
 
-      <div className="w-full max-w-lg aspect-[16/9] bg-slate-200/30 dark:bg-white/5 rounded-2xl border border-black/5 overflow-hidden flex items-center justify-center relative">
+      <div className="w-full max-w-lg aspect-video bg-slate-200/30 dark:bg-white/5 rounded-2xl border border-black/5 overflow-hidden flex items-center justify-center relative">
         <motion.div 
           animate={{ scale: zoom }}
           className="w-40 h-56 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-black/5 dark:border-white/10 p-5 flex flex-col gap-3"
@@ -1990,7 +1990,7 @@ const DemoCardPadding = () => {
         <span className="text-xs font-mono font-bold min-w-[3ch]">{padding}px</span>
       </div>
 
-      <div className="w-full max-w-lg aspect-[16/9] bg-slate-200/30 dark:bg-white/5 rounded-2xl border border-black/5 flex items-center justify-center">
+      <div className="w-full max-w-lg aspect-video bg-slate-200/30 dark:bg-white/5 rounded-2xl border border-black/5 flex items-center justify-center">
         <div className="w-48 h-64 bg-slate-300 dark:bg-slate-800 rounded-xl relative overflow-hidden shadow-lg">
            {/* Inner Card representing content area */}
            <motion.div 
@@ -2040,12 +2040,12 @@ const DemoSmartPagination = () => {
         {language === 'zh' ? '智能自动分页演示' : 'Smart Auto-Pagination Demo'}
       </div>
 
-      <div className="relative w-full max-w-lg aspect-[16/10] bg-slate-200/50 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden p-6 flex flex-col gap-4">
+      <div className="relative w-full max-w-lg aspect-16/10 bg-slate-200/50 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden p-6 flex flex-col gap-4">
         {/* Mock Toolbar */}
         <div className="flex items-center gap-2 p-2 bg-white dark:bg-black/40 rounded-xl shadow-sm border border-black/5 dark:border-white/10">
           <div className="w-4 h-4 rounded bg-slate-200 dark:bg-white/10" />
           <div className="w-4 h-4 rounded bg-slate-200 dark:bg-white/10" />
-          <div className="w-[1px] h-4 bg-black/10 dark:bg-white/10 mx-1" />
+          <div className="w-px h-4 bg-black/10 dark:bg-white/10 mx-1" />
           <button 
             onClick={handlePaginate}
             disabled={isPaginating}

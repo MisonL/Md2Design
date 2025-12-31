@@ -252,7 +252,7 @@ const PresetsManager = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[1000] bg-black/35"
+              className="fixed inset-0 z-1000 bg-black/35"
               onClick={() => setPreviewPreset(null)}
               style={{
                 backdropFilter: 'blur(12px)',
@@ -533,14 +533,14 @@ const PresetCard = ({
   };
 
   return (
-    <div className="relative shadow-2xl overflow-hidden flex flex-col flex-shrink-0" style={outerStyle}>
+    <div className="relative shadow-2xl overflow-hidden flex flex-col shrink-0" style={outerStyle}>
       {renderOuterBackground()}
 
       <div className="relative w-full h-full flex flex-col overflow-hidden" style={innerStyle}>
         {renderInnerBackground()}
 
         {style.template === 'default' && (
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-400 to-orange-300 blur-3xl opacity-20 -z-0 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-pink-400 to-orange-300 blur-3xl opacity-20 z-0 pointer-events-none" />
         )}
 
         <div className="relative z-10 h-full flex flex-col">
@@ -640,7 +640,7 @@ const PresetCard = ({
                       {children}
                     </code>
                   ) : (
-                    <code style={{ backgroundColor: style.codeBackgroundColor, fontSize: '0.8em' }} className="block rounded-lg p-4 font-mono my-4 overflow-x-auto whitespace-pre-wrap break-words" {...props}>
+                    <code style={{ backgroundColor: style.codeBackgroundColor, fontSize: '0.8em' }} className="block rounded-lg p-4 font-mono my-4 overflow-x-auto whitespace-pre-wrap wrap-break-word" {...props}>
                       {children}
                     </code>
                   );
@@ -652,7 +652,7 @@ const PresetCard = ({
           </div>
 
           <div
-            className="flex-shrink-0 w-full pt-2 flex items-center relative font-mono uppercase tracking-widest pointer-events-none text-[10px] h-8"
+            className="shrink-0 w-full pt-2 flex items-center relative font-mono uppercase tracking-widest pointer-events-none text-[10px] h-8"
             style={{ opacity: style.watermark.opacity ?? 0.6 }}
           >
             <div className="absolute left-0 flex items-center gap-4">
@@ -754,7 +754,7 @@ const ColorPicker = ({ color, onChange, label }: { color: string, onChange: (col
           <button 
             ref={buttonRef}
             onClick={() => setIsOpen(!isOpen)}
-            className="w-8 h-8 rounded-full border border-black/20 dark:border-white/20 shadow-sm relative overflow-hidden transition-transform active:scale-95 flex-shrink-0"
+            className="w-8 h-8 rounded-full border border-black/20 dark:border-white/20 shadow-sm relative overflow-hidden transition-transform active:scale-95 shrink-0"
             style={{ backgroundColor: color }}
           />
         </div>
@@ -763,7 +763,7 @@ const ColorPicker = ({ color, onChange, label }: { color: string, onChange: (col
       {isOpen && createPortal(
         <div 
           ref={popoverRef} 
-          className="fixed z-[9999] p-3 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-black/10 dark:border-white/10"
+          className="fixed z-9999 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-black/10 dark:border-white/10"
           style={{ 
             top: coords.top, 
             left: coords.left,
@@ -1806,11 +1806,11 @@ export const Sidebar = () => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto"
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-100 pointer-events-auto"
           >
             <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-2xl rounded-full px-6 py-4 flex items-center gap-6 min-w-[320px]">
               {/* Countdown Circle */}
-              <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center">
+              <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
                 <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
                   <circle
                     cx="24"
@@ -1855,7 +1855,7 @@ export const Sidebar = () => {
                 </button>
                 <button
                   onClick={closeToast}
-                  className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-black dark:text-white opacity-40 hover:opacity-100 flex-shrink-0"
+                  className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-black dark:text-white opacity-40 hover:opacity-100 shrink-0"
                 >
                   <Plus size={18} className="rotate-45" />
                 </button>

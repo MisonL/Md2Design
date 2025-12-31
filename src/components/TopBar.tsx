@@ -60,12 +60,12 @@ export const TopBar = () => {
         <AnimatePresence>
           {isOpen && (
             <>
-              <div className="fixed inset-0 z-[100]" onClick={() => setIsOpen(false)} />
+              <div className="fixed inset-0 z-100" onClick={() => setIsOpen(false)} />
               <motion.div
                 initial={{ opacity: 0, y: 4, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                className="absolute left-0 right-0 top-full mt-1 z-[101] bg-white dark:bg-[#1a1a1a] border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden py-1"
+                className="absolute left-0 right-0 top-full mt-1 z-101 bg-white dark:bg-[#1a1a1a] border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden py-1"
               >
                 {options.map((option) => (
                   <button
@@ -526,7 +526,7 @@ export const TopBar = () => {
                       stiffness: 260,
                       damping: 20
                     }}
-                    className="absolute left-full whitespace-nowrap z-[100]"
+                    className="absolute left-full whitespace-nowrap z-100"
                    >
                      <div className="bg-orange-400/85 dark:bg-orange-500/80 backdrop-blur-md text-white px-4 py-2 rounded-xl shadow-[0_10px_30px_-10px_rgba(251,146,60,0.5)] text-xs font-bold flex items-center gap-2 border border-white/20">
                          <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -623,7 +623,7 @@ export const TopBar = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
             onClick={() => setShowExport(false)}
           >
             <motion.div
@@ -634,8 +634,8 @@ export const TopBar = () => {
               onClick={(e) => e.stopPropagation()}
             >
                {/* Background Glow */}
-               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none -z-0" />
-               <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none -z-0" />
+               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none z-0" />
+               <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none z-0" />
 
                <div className="relative z-10 flex flex-col h-full overflow-hidden">
                  <div className="flex items-center justify-between mb-6 shrink-0">
@@ -1017,7 +1017,7 @@ export const TopBar = () => {
                      <button
                        onClick={handleExport}
                        disabled={isExporting}
-                       className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl text-sm font-bold shadow-xl shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform active:scale-[0.98]"
+                       className="w-full py-3.5 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl text-sm font-bold shadow-xl shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform active:scale-[0.98]"
                      >
                        {isExporting ? (
                          <>
@@ -1045,7 +1045,7 @@ export const TopBar = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none"
+            className="fixed inset-0 z-70 flex items-center justify-center pointer-events-none"
           >
             <motion.div
               initial={{ scale: 0.8, y: 20, opacity: 0 }}
@@ -1071,7 +1071,7 @@ export const TopBar = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
             onClick={() => setShowContact(false)}
           >
             <motion.div
