@@ -12,6 +12,17 @@ interface ChangelogModalProps {
   onClose: () => void;
 }
 
+const PaddingIcon = ({ side }: { side: 'top' | 'right' | 'bottom' | 'left' | 'all' }) => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-70">
+    <rect x="2.5" y="2.5" width="9" height="9" rx="1" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
+    {side === 'top' && <path d="M3 2H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+    {side === 'bottom' && <path d="M3 12H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+    {side === 'left' && <path d="M2 3V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+    {side === 'right' && <path d="M12 3V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+    {side === 'all' && <rect x="2.5" y="2.5" width="9" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" />}
+  </svg>
+);
+
 export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   const t = useTranslation();
   const { language } = useStore();
@@ -598,16 +609,6 @@ const DemoPaddingCustomization = () => {
     }
   };
 
-  const PaddingIcon = ({ side }: { side: 'top' | 'right' | 'bottom' | 'left' | 'all' }) => (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-70">
-      <rect x="2.5" y="2.5" width="9" height="9" rx="1" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-      {side === 'top' && <path d="M3 2H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
-      {side === 'bottom' && <path d="M3 12H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
-      {side === 'left' && <path d="M2 3V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
-      {side === 'right' && <path d="M12 3V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
-      {side === 'all' && <rect x="2.5" y="2.5" width="9" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" />}
-    </svg>
-  );
 
   return (
     <div className="w-full max-w-md space-y-8">
@@ -848,7 +849,7 @@ const DemoMultiLineList = () => {
 
       <div className="bg-white dark:bg-[#151515] rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
         {/* Editor-like Toolbar */}
-        <div className="px-4 py-2 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
+        <div className="px-4 py-2 border-b border-black/5 dark:border-white/5 bg-black/2 dark:bg-white/2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsList(!isList)}
