@@ -26,7 +26,10 @@ const translations = {
     paddingSync: 'Sync Padding',
     fontFamily: 'Font Family',
     fontSize: 'Font Size',
-    headingScale: 'H4~H6 Heading Size',
+    h1FontSize: 'H1 Size',
+    h2FontSize: 'H2 Size',
+    h3FontSize: 'H3 Size',
+    headingScale: 'H4~H6 Size',
     zoom: 'Preview Zoom',
     editor: 'EDITOR',
     editorHint: 'Support Feishu/Notion/Lark docs paste auto-conversion',
@@ -132,6 +135,9 @@ const translations = {
     enterPresetName: 'Enter preset name...',
     feedback: 'Feedback',
     onboardingTip: 'Check updates and report bugs here',
+    autoPaginate: 'Auto Paginate',
+    autoPaginatedToast: 'Auto Paginated',
+    autoPaginatedMsg: 'Content too long, auto-split by height. Use "---" for manual split.',
   },
   zh: {
     title: 'Md2Design',
@@ -158,7 +164,10 @@ const translations = {
     paddingSync: '同步边距',
     fontFamily: '字体',
     fontSize: '字号',
-    headingScale: 'H4~H6 标题字号',
+    h1FontSize: 'H1 字号',
+    h2FontSize: 'H2 字号',
+    h3FontSize: 'H3 字号',
+    headingScale: 'H4~H6 字号',
     zoom: '预览缩放',
     editor: '编辑器',
     editorHint: '支持飞书、Notion文档粘贴自动识别',
@@ -264,6 +273,9 @@ const translations = {
     enterPresetName: '输入预设名称...',
     feedback: '意见反馈',
     onboardingTip: '这里可以查看更新和反馈bug',
+    autoPaginate: '自动分页',
+    autoPaginatedToast: '已自动分页',
+    autoPaginatedMsg: '内容过长，已按页面高度自动切割。可用 "---" 手动调整。',
   }
 };
 

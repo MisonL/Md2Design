@@ -965,7 +965,7 @@ export const Sidebar = () => {
                 {/* Aspect Ratio */}
                 {cardStyle.autoHeight ? (
                     <div className="mb-4">
-                        <label className="text-xs font-medium opacity-70 mb-2 block">卡片宽度 (px)</label>
+                        <label className="text-xs font-medium opacity-70 mb-2 block">{t.width} (px)</label>
                         <DraggableNumberInput 
                             value={cardStyle.width} 
                             min={300} max={1200} 
@@ -1634,21 +1634,21 @@ export const Sidebar = () => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="text-xs font-medium opacity-70 mb-2 block">文本字号</label>
+                  <label className="text-xs font-medium opacity-70 mb-2 block">{t.fontSize}</label>
                   <DraggableNumberInput value={cardStyle.fontSize} min={12} max={96} onChange={(val) => updateCardStyle({ fontSize: val })} icon={<ParameterIcon type="fontSize" />} />
                 </div>
                 
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <div>
-                    <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">H1 字号</label>
+                    <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.h1FontSize}</label>
                     <DraggableNumberInput value={cardStyle.h1FontSize} min={16} max={48} onChange={(val) => updateCardStyle({ h1FontSize: val })} icon={<ParameterIcon type="fontSize" />} />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">H2 字号</label>
+                    <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.h2FontSize}</label>
                     <DraggableNumberInput value={cardStyle.h2FontSize} min={14} max={36} onChange={(val) => updateCardStyle({ h2FontSize: val })} icon={<ParameterIcon type="fontSize" />} />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">H3 字号</label>
+                    <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.h3FontSize}</label>
                     <DraggableNumberInput value={cardStyle.h3FontSize} min={12} max={24} onChange={(val) => updateCardStyle({ h3FontSize: val })} icon={<ParameterIcon type="fontSize" />} />
                   </div>
                 </div>

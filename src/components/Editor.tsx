@@ -374,7 +374,7 @@ export const Editor = () => {
                      }
                    }, 0);
                 }}
-                title="自动分页"
+                title={t.autoPaginate}
                 className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-90 hover:opacity-100 group shrink-0"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -441,8 +441,8 @@ export const Editor = () => {
               <Check size={14} className="text-white" strokeWidth={3} />
             </div>
             <div className="flex flex-col">
-                <span className="text-sm font-bold">已自动分页</span>
-                <span className="text-[10px] opacity-80">内容过长，已按页面高度自动切割。可用 "---" 手动调整。</span>
+                <span className="text-sm font-bold">{t.autoPaginatedToast}</span>
+                <span className="text-[10px] opacity-80">{t.autoPaginatedMsg}</span>
             </div>
             <button 
                 onClick={() => setShowPaginationToast(false)}
