@@ -172,23 +172,27 @@ export const DraggableNumberInput = ({
   label?: string
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(value.toString());
   const startX = useRef(0);
   const startValue = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setInputValue(value.toString());
+  }, [value]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       const delta = e.clientX - startX.current;
-      // Adjust sensitivity based on step
       const sensitivity = step < 1 ? 0.01 : 0.5;
       const change = delta * sensitivity;
       const rawValue = startValue.current + change;
       
-      // Snap to step
       const steppedValue = Math.round(rawValue / step) * step;
       const newValue = Math.max(min, Math.min(max, steppedValue));
       
-      // Handle precision issues for float steps
       const finalValue = parseFloat(newValue.toFixed(step < 1 ? 2 : 0));
       onChange(finalValue);
     };
@@ -212,10 +216,35 @@ export const DraggableNumberInput = ({
   }, [isDragging, min, max, step, onChange]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isEditing) return;
     e.preventDefault();
     setIsDragging(true);
     startX.current = e.clientX;
     startValue.current = value;
+  };
+
+  const handleInputBlur = () => {
+    setIsEditing(false);
+    let newValue = parseFloat(inputValue);
+    if (isNaN(newValue)) {
+      setInputValue(value.toString());
+      return;
+    }
+    newValue = Math.max(min, Math.min(max, newValue));
+    const finalValue = parseFloat(newValue.toFixed(step < 1 ? 2 : 0));
+    onChange(finalValue);
+    setInputValue(finalValue.toString());
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleInputBlur();
+      inputRef.current?.blur();
+    } else if (e.key === 'Escape') {
+      setInputValue(value.toString());
+      setIsEditing(false);
+      inputRef.current?.blur();
+    }
   };
 
   return (
@@ -226,15 +255,39 @@ export const DraggableNumberInput = ({
         </div>
       )}
       <div 
-        className={`relative group flex items-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg overflow-hidden cursor-ew-resize transition-colors hover:bg-black/10 dark:hover:bg-white/10 ${isDragging ? 'bg-black/10 dark:bg-white/10 ring-1 ring-blue-500/50' : ''}`}
+        className={`relative group flex items-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg overflow-hidden transition-colors hover:bg-black/10 dark:hover:bg-white/10 ${isDragging ? 'bg-black/10 dark:bg-white/10 ring-1 ring-blue-500/50' : ''} ${isEditing ? 'ring-1 ring-blue-500 bg-white dark:bg-black/20' : ''} cursor-ew-resize h-9`}
         onMouseDown={handleMouseDown}
-        title="Drag left/right to adjust"
+        title="Drag anywhere to adjust, Click value to type"
       >
-        <div className="pl-3 pr-2 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors pointer-events-none">
+        <div className="pl-3 pr-2 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors pointer-events-none flex items-center h-full">
           {icon}
         </div>
-        <div className="flex-1 py-2 pr-3 text-right font-mono text-xs font-medium select-none pointer-events-none">
-          {value}
+        <div className="flex-1 relative h-full flex items-center justify-end pr-2">
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onBlur={handleInputBlur}
+              onKeyDown={handleKeyDown}
+              className="w-12 py-1 text-center font-mono text-xs font-medium bg-white dark:bg-black/40 rounded border border-blue-500 outline-none text-slate-800 dark:text-slate-100 cursor-text shadow-sm"
+            />
+          ) : (
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+                setTimeout(() => {
+                  inputRef.current?.focus();
+                  inputRef.current?.select();
+                }, 0);
+              }}
+              className="min-w-[32px] px-1 py-1 text-center font-mono text-xs font-medium select-none text-slate-700 dark:text-slate-300 cursor-text transition-colors flex items-center justify-center h-full"
+            >
+              {value}
+            </div>
+          )}
         </div>
       </div>
     </div>
