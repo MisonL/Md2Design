@@ -180,7 +180,9 @@ const Card = ({
   };
 
   const innerStyle = {
-    fontFamily: cardStyle.fontFamily,
+    fontFamily: ['serif', 'monospace', 'sans-serif', 'cursive', 'fantasy', 'system-ui'].includes(cardStyle.fontFamily) 
+      ? `${cardStyle.fontFamily}, system-ui, sans-serif`
+      : `"${cardStyle.fontFamily}", system-ui, sans-serif`,
     backgroundColor: 'transparent', // Handled by separate layer
     color: cardStyle.textColor,
     fontSize: `${cardStyle.fontSize}px`,
@@ -358,7 +360,8 @@ const Card = ({
                 className="prose prose-sm max-w-none flex-1 pointer-events-auto overflow-hidden break-words [&>*:first-child]:mt-0"
                 style={{ 
                   padding: 0,
-                  maxHeight: cardStyle.autoHeight ? 'none' : '100%' // Ensure strict clipping to prevent overlap
+                  maxHeight: cardStyle.autoHeight ? 'none' : '100%', // Ensure strict clipping to prevent overlap
+                  fontFamily: 'inherit'
                 }}
               >
                 <ReactMarkdown
@@ -428,9 +431,9 @@ const Card = ({
                       p: ({...props}) => (
                         <p style={{color: cardStyle.textColor}} className="mb-4 leading-relaxed opacity-90 first:mt-0" {...props} />
                       ),
-                      ul: ({...props}) => <ul style={{color: cardStyle.textColor}} className="mb-4 list-disc list-outside pl-5 space-y-1" {...props} />,
-                      ol: ({...props}) => <ol style={{color: cardStyle.textColor}} className="mb-4 list-decimal list-outside pl-5 space-y-1" {...props} />,
-                      li: ({...props}) => <li className="pl-1 marker:opacity-70 [&>p]:mb-2" {...props} />,
+                      ul: ({...props}) => <ul style={{color: cardStyle.textColor}} className="mb-4 list-disc list-inside space-y-1" {...props} />,
+                      ol: ({...props}) => <ol style={{color: cardStyle.textColor}} className="mb-4 list-decimal list-inside space-y-1" {...props} />,
+                      li: ({...props}) => <li className="marker:opacity-70 [&>p]:inline" {...props} />,
                       table: ({...props}) => <div className="overflow-x-auto mb-6 rounded-lg border border-current opacity-90"><table className="w-full text-left text-sm border-collapse" {...props} /></div>,
                       thead: ({...props}) => <thead className="bg-black/5 dark:bg-white/10 font-semibold" {...props} />,
                       tbody: ({...props}) => <tbody className="divide-y divide-current/10" {...props} />,

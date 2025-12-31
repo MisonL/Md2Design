@@ -5,9 +5,21 @@ import { Preview } from './components/Preview';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 
+import { injectAllLocalFonts } from './utils/fonts';
+
 function App() {
   const { theme, cardStyle } = useStore();
   const { undo, redo } = useStore.temporal.getState();
+
+  // Initial font injection for all local preset fonts
+  useEffect(() => {
+    fetch('/fonts.json')
+      .then(res => res.json())
+      .then(fonts => {
+        injectAllLocalFonts(fonts);
+      })
+      .catch(err => console.error('Failed to load fonts:', err));
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
