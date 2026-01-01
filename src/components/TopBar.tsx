@@ -656,8 +656,8 @@ export const TopBar = () => {
                    {/* Format & Scale Row */}
                    <div className="grid grid-cols-2 gap-4">
                      <div>
-                       <label className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.format}</label>
-                       <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
+                       <span id="format-label" className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.format}</span>
+                       <div role="group" aria-labelledby="format-label" className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
                          {['png', 'jpg'].map((f) => (
                            <button
                              key={f}
@@ -672,8 +672,8 @@ export const TopBar = () => {
                        </div>
                      </div>
                      <div>
-                       <label className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.scale}</label>
-                       <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
+                       <span id="scale-label" className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.scale}</span>
+                       <div role="group" aria-labelledby="scale-label" className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
                          {[1, 2, 3, 4].map((s) => (
                            <button
                              key={s}
@@ -691,8 +691,8 @@ export const TopBar = () => {
 
                    {/* Export Mode */}
                    <div>
-                     <label className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.exportMode}</label>
-                     <div className="flex flex-col gap-2">
+                     <span id="export-mode-label" className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.exportMode}</span>
+                     <div role="group" aria-labelledby="export-mode-label" className="flex flex-col gap-2">
                        {[
                          { value: 'multiple', label: t.multipleFiles, desc: 'Package multiple cards' },
                          { value: 'single', label: t.singleFile, desc: 'Download cards one by one' }
@@ -725,8 +725,8 @@ export const TopBar = () => {
                    {/* Export Target (Only for multiple mode) */}
                    {exportMode === 'multiple' && (
                      <div>
-                       <label className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.exportTarget}</label>
-                       <div className="flex flex-col gap-2">
+                       <span id="export-target-label" className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.exportTarget}</span>
+                       <div role="group" aria-labelledby="export-target-label" className="flex flex-col gap-2">
                          {[
                            { value: 'zip', label: t.targetZip, desc: 'Compatible with all folders' },
                            { value: 'folder', label: t.targetFolder, desc: 'Requires folder permission' }
@@ -780,7 +780,7 @@ export const TopBar = () => {
 
                    {/* File Name Customization */}
                    <div className="space-y-4">
-                      <label className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.fileNameCustom}</label>
+                      <span className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.fileNameCustom}</span>
                       
                       {/* Naming Mode Toggle */}
                       <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
@@ -813,7 +813,7 @@ export const TopBar = () => {
                             className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-3 text-sm text-slate-900 dark:text-white focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
                           />
                           <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
-                            <label className="text-[10px] uppercase tracking-wider text-black/40 dark:text-white/40 mb-1 block">{t.namingPreview}</label>
+                            <h3 className="text-[10px] uppercase tracking-wider text-black/40 dark:text-white/40 mb-1 block">{t.namingPreview}</h3>
                             <div className="text-xs font-mono text-slate-500 dark:text-white/60 truncate">
                               {generateFileName(0, 10)}.{format}
                             </div>
@@ -979,7 +979,7 @@ export const TopBar = () => {
 
                           {/* Preview for Number Order */}
                           <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
-                            <label className="text-[10px] uppercase tracking-wider text-black/40 dark:text-white/40 mb-1 block">{t.namingPreview}</label>
+                            <h3 className="text-[10px] uppercase tracking-wider text-black/40 dark:text-white/40 mb-1 block">{t.namingPreview}</h3>
                             <div className="space-y-1 font-mono text-[10px] text-slate-500 dark:text-white/60">
                               {namingParts.includes('number') ? (
                                 <>
