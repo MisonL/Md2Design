@@ -145,6 +145,10 @@ const translations = {
     alipay: 'Alipay',
     wechat: 'WeChat Pay',
     selectAmount: 'Select Amount',
+    saveCurrent: 'Save Current Style',
+    enterPresetName: 'Enter preset name...',
+    feedback: 'Feedback',
+    onboardingTip: 'Check updates and feedback bugs here',
   },
   zh: {
     title: 'Md2Design',

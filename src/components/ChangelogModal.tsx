@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun, Moon } from 'lucide-react';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
@@ -843,7 +843,7 @@ const DraggableValue = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value.toString());
-  const inputRef = useEffect(() => {
+  useEffect(() => {
     setInputValue(value.toString());
   }, [value]);
 
