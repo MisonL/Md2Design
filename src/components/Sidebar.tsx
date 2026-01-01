@@ -1055,11 +1055,11 @@ export const Sidebar = () => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto"
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-100 pointer-events-auto"
           >
             <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-2xl rounded-full px-6 py-4 flex items-center gap-6 min-w-[320px]">
               {/* Countdown Circle */}
-              <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center">
+              <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
                 <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
                   <circle
                     cx="24"
@@ -1104,7 +1104,7 @@ export const Sidebar = () => {
                 </button>
                 <button
                   onClick={closeToast}
-                  className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-black dark:text-white opacity-40 hover:opacity-100 flex-shrink-0"
+                  className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-black dark:text-white opacity-40 hover:opacity-100 shrink-0"
                 >
                   <Plus size={18} className="rotate-45" />
                 </button>
