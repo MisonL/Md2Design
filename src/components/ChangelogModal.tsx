@@ -31,6 +31,25 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   // Update data
   const updates = useMemo(() => [
     {
+      version: 'v1.8.0',
+      date: '2025-12-31',
+      title: {
+        en: 'Progressive Disclosure & More Fonts',
+        zh: '渐进式披露 & 更多字体预设'
+      },
+      changes: {
+        en: [
+          'Progressive Disclosure: Redesigned the sidebar with "Advanced Options" toggles to keep the interface clean while maintaining power.',
+          'More Font Presets: Added a "More Presets" dropdown that automatically indexes and injects fonts from the local /fonts folder.',
+        ],
+        zh: [
+          '渐进式披露：重构侧边栏布局，通过“更多设置”折叠高级选项，保持界面简洁且不失功能深度。',
+          '更多字体预设：新增“更多预设字体”下拉菜单，自动索引并注入本地 fonts 文件夹中的所有字体。',
+        ]
+      },
+      demo: 'v180-features'
+    },
+    {
       version: 'v1.7.2',
       date: '2025-12-31',
       title: {
@@ -399,6 +418,14 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                             </h3>
                          </div>
 
+                         {currentUpdate.demo === 'v180-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoProgressiveDisclosure />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoFontPresets />
+                           </div>
+                         )}
+
                          {currentUpdate.demo === 'v172-features' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
                               <DemoSliderIntegration />
@@ -484,7 +511,125 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   );
 };
 
- const DraggableValue = ({ 
+ const DemoProgressiveDisclosure = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { language } = useStore();
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '渐进式披露演示' : 'Progressive Disclosure Demo'}
+      </div>
+      <div className="bg-white dark:bg-[#151515] rounded-2xl border border-black/5 dark:border-white/10 overflow-hidden shadow-xl">
+        <div className="p-4 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
+           <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+             {language === 'zh' ? '侧边栏设置' : 'Sidebar Settings'}
+           </span>
+         </div>
+        <div className="p-5 space-y-5">
+          <div className="space-y-2">
+            <div className="h-2 w-20 bg-slate-200 dark:bg-white/10 rounded" />
+            <div className="h-9 w-full bg-slate-100 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5" />
+          </div>
+          
+          <div className="pt-2">
+            <button 
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center gap-2 text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors group"
+            >
+              <div className={`p-1 rounded-md bg-blue-500/10 group-hover:bg-blue-500/20 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                <ChevronDown size={12} />
+              </div>
+              {language === 'zh' ? '更多设置' : 'Advanced Options'}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-2 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="h-14 bg-blue-500/5 dark:bg-blue-500/10 rounded-xl border border-blue-500/20 flex flex-col items-center justify-center gap-1.5">
+                      <div className="h-1.5 w-8 bg-blue-500/30 rounded-full" />
+                      <div className="h-1.5 w-12 bg-blue-500/50 rounded-full" />
+                    </div>
+                    <div className="h-14 bg-purple-500/5 dark:bg-purple-500/10 rounded-xl border border-purple-500/20 flex flex-col items-center justify-center gap-1.5">
+                      <div className="h-1.5 w-8 bg-purple-500/30 rounded-full" />
+                      <div className="h-1.5 w-12 bg-purple-500/50 rounded-full" />
+                    </div>
+                  </div>
+                  <div className="h-9 w-full bg-slate-50 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoFontPresets = () => {
+   const { language } = useStore();
+   const fonts = [
+     { name: 'Helvetica', family: '"Helvetica", sans-serif', desc: 'Classic & Professional' },
+     { name: 'Google Sans Code', family: '"GoogleSansCode-Regular", monospace', desc: 'Modern Monospace' },
+     { name: 'OPPO Sans', family: '"OPPO Sans 4.0", sans-serif', desc: 'Balanced & Clear' },
+   ];
+   const [selected, setSelected] = useState(fonts[0].name);
+
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '更多字体预设演示' : 'More Font Presets Demo'}
+      </div>
+      <div className="grid grid-cols-1 gap-2.5">
+        {fonts.map(f => (
+          <button
+            key={f.name}
+            onClick={() => setSelected(f.name)}
+            className={`p-4 rounded-2xl border transition-all text-left flex items-center justify-between group ${
+              selected === f.name 
+                ? 'bg-blue-600 border-blue-700 text-white shadow-lg shadow-blue-500/20' 
+                : 'bg-white dark:bg-white/5 border-black/5 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-blue-500/50'
+            }`}
+          >
+            <div className="flex flex-col gap-0.5">
+              <span style={{ fontFamily: f.family }} className="text-base font-medium">
+                {f.name}
+              </span>
+              <span className={`text-[10px] uppercase tracking-wider ${selected === f.name ? 'text-blue-100/70' : 'text-slate-400'}`}>
+                {f.desc}
+              </span>
+            </div>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${selected === f.name ? 'bg-white/20' : 'bg-black/5 dark:bg-white/5 group-hover:bg-blue-500/10'}`}>
+              {selected === f.name ? <CheckIcon size={12} /> : <Plus size={12} className="opacity-40" />}
+            </div>
+          </button>
+        ))}
+      </div>
+      <div 
+         className="mt-4 p-8 rounded-3xl bg-white dark:bg-[#151515] border border-black/5 dark:border-white/10 shadow-xl min-h-[120px] flex items-center justify-center text-center transition-all duration-500 ease-out"
+         style={{ fontFamily: fonts.find(f => f.name === selected)?.family }}
+       >
+         <div className="space-y-2">
+           <p className="text-xl text-slate-800 dark:text-white leading-snug font-medium">
+             在这里预览不同字体的独特魅力
+           </p>
+           <p className="text-sm text-slate-500 dark:text-slate-400 leading-snug opacity-80">
+             Preview the unique charm of different fonts
+           </p>
+         </div>
+       </div>
+    </div>
+  );
+};
+
+const DraggableValue = ({ 
   value, 
   onChange, 
   min = 0, 

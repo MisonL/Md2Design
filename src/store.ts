@@ -195,7 +195,7 @@ export const PRESET_GRADIENTS = [
   { start: '#ff9a9e', end: '#fad0c4', name: 'Peach Sorbet' },
   { start: '#2193b0', end: '#6dd5ed', name: 'Cool Blues' },
   { start: '#ee9ca7', end: '#ffdde1', name: 'Cherry Blossom' },
-  { start: '#89f7fe', end: '#66a6ff', name: 'Morning Dew' },
+  { start: '#d4dcdd', end: '#94b1cc', name: 'Default' },
   { start: '#f6d365', end: '#fda085', name: 'Spring Warmth' },
   { start: '#fccb90', end: '#d57eeb', name: 'Pastel Violet' },
 ];
