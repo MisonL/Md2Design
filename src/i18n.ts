@@ -138,10 +138,13 @@ const translations = {
     apply: 'Apply',
     delete: 'Delete',
     noPresets: 'No presets saved',
-    saveCurrent: 'Save Current Style',
-    enterPresetName: 'Enter preset name...',
-    feedback: 'Feedback',
-    onboardingTip: 'Check updates and report bugs here',
+    supportAuthor: 'Support Author',
+    supportMe: 'Support Me',
+    fiveRMB: '5 RMB',
+    fifteenRMB: '15 RMB',
+    alipay: 'Alipay',
+    wechat: 'WeChat Pay',
+    selectAmount: 'Select Amount',
   },
   zh: {
     title: 'Md2Design',
@@ -284,6 +287,13 @@ const translations = {
     enterPresetName: '输入预设名称...',
     feedback: '意见反馈',
     onboardingTip: '这里可以查看更新和反馈bug',
+    supportAuthor: '支持作者',
+    supportMe: '支持一下',
+    fiveRMB: '5元',
+    fifteenRMB: '15元',
+    alipay: '支付宝',
+    wechat: '微信支付',
+    selectAmount: '选择金额',
   }
 };
 

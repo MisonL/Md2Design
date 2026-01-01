@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame } from 'lucide-react';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun, Moon } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
@@ -19,6 +19,25 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
 
   // Update data
   const updates = [
+    {
+      version: 'v1.8.1',
+      date: '2026-01-02',
+      title: {
+        en: 'Support Page & Manual Input',
+        zh: '赞赏页面 & 参数手动输入'
+      },
+      changes: {
+        en: [
+          'Brand new support/donation flow with dedicated QR codes and persistent tips.',
+          'Manual input support: Click on any numeric parameter value to type precisely.',
+        ],
+        zh: [
+          '全新的赞赏/打赏流程：新增专属收款码与常驻打赏提示框，支持作者不再迷路。',
+          '参数手动输入：点击任意数值参数即可直接输入精确数值，告别滑动误差。',
+        ]
+      },
+      demo: 'v181-features'
+    },
     {
       version: 'v1.8.0',
       date: '2025-12-31',
@@ -405,6 +424,14 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                             </h3>
                          </div>
 
+                         {currentUpdate.demo === 'v181-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoManualInput />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoSupportFlow />
+                           </div>
+                         )}
+
                          {currentUpdate.demo === 'v180-features' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
                               <DemoProgressiveDisclosure />
@@ -498,7 +525,187 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   );
 };
 
- const DemoProgressiveDisclosure = () => {
+ const DemoManualInput = () => {
+  const { language } = useStore();
+  const [val, setVal] = useState(20);
+
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '手动输入参数演示' : 'Manual Input Demo'}
+      </div>
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-4">
+        <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+          {language === 'zh' ? '点击数值即可精确输入，左右拖拽图标仍可快速调节' : 'Click the value to type precisely, or drag the icon to adjust quickly'}
+        </p>
+        <div className="flex justify-center">
+           <DraggableValue 
+             label={language === 'zh' ? '外边距' : 'Margin'}
+             value={val} 
+             onChange={setVal}
+             icon={<Maximize2 size={14} />}
+           />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoSupportFlow = () => {
+  const { language } = useStore();
+  const t = useTranslation();
+  const [showTip, setShowTip] = useState(true);
+  const [selectedAmount, setSelectedAmount] = useState<5 | 15 | null>(null);
+
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '赞赏流程演示' : 'Support Flow Demo'}
+      </div>
+      
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-6">
+        {/* Step 1: Tip & Entrance */}
+        {!selectedAmount && (
+          <div className="space-y-6">
+            <div className="relative h-24 bg-slate-50 dark:bg-black/20 rounded-2xl border border-dashed border-black/10 dark:border-white/10 flex items-center justify-center">
+            <div className="flex items-center gap-1 p-1.5 bg-white/50 dark:bg-black/20 rounded-full border border-black/5 dark:border-white/10">
+              <div className="relative">
+                <div className="p-1.5 bg-white dark:bg-white/5 rounded-full border border-black/5 dark:border-white/10 text-blue-500 shadow-sm">
+                  <Info size={16} />
+                </div>
+                
+                <AnimatePresence>
+                  {showTip && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, y: 0 }}
+                      animate={{ opacity: 1, scale: 1, y: 10 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 0 }}
+                      className="absolute top-full right-0 whitespace-nowrap z-10"
+                    >
+                      <div className="bg-orange-400/85 dark:bg-orange-500/80 backdrop-blur-md text-white px-3 py-1.5 rounded-lg shadow-lg text-[9px] font-bold flex items-center gap-2 border border-white/20">
+                        <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                        {language === 'zh' ? '欢迎打赏，老板大气，老板永远不死' : 'Support the author!'}
+                        <button onClick={() => setShowTip(false)} className="hover:bg-white/20 rounded-full p-0.5">
+                          <X size={10} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="p-1.5 text-slate-400 opacity-40">
+                <Github size={16} />
+              </div>
+              <div className="p-1.5 text-slate-400 opacity-40">
+                <Languages size={16} />
+              </div>
+              <div className="p-1.5 text-slate-400 opacity-40">
+                <Sun size={16} />
+              </div>
+            </div>
+          </div>
+
+            <div className="space-y-3">
+              <p className="text-[10px] text-slate-400 text-center">
+                {language === 'zh' ? '点击下方按钮进入打赏流程' : 'Click the button below to support'}
+              </p>
+              <button
+                onClick={() => setSelectedAmount(null)}
+                className="w-full p-3 bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 dark:border-red-500/30 rounded-xl flex items-center justify-center gap-2 text-red-600 dark:text-red-400 text-xs font-bold transition-all hover:bg-red-500/20"
+              >
+                <ThumbsUp size={14} />
+                <span>{t.supportMe}</span>
+              </button>
+            </div>
+
+            {/* Support Selection Panel (Simplified) */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {[
+                { amount: 5 as const, label: t.fiveRMB, img: 'assets/support/options/5rmb.png' },
+                { amount: 15 as const, label: t.fifteenRMB, img: 'assets/support/options/15rmb.png' }
+              ].map((item) => (
+                <button
+                  key={item.amount}
+                  onClick={() => setSelectedAmount(item.amount)}
+                  className="aspect-square relative group overflow-hidden rounded-xl border border-black/5 dark:border-white/10 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                >
+                  <img 
+                    src={item.img} 
+                    alt={item.label}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/200x200/fee2e2/dc2626?text=${item.label}`;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-2">
+                    <span className="text-white text-[10px] font-bold">{item.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: QR Codes */}
+        {selectedAmount && (
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                {selectedAmount === 5 ? t.fiveRMB : t.fifteenRMB} {t.supportAuthor}
+              </h4>
+              <button 
+                onClick={() => setSelectedAmount(null)}
+                className="text-[10px] text-blue-500 hover:underline"
+              >
+                {language === 'zh' ? '返回' : 'Back'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[9px] font-bold text-blue-500">{t.alipay}</span>
+                <div className="p-2 bg-white rounded-xl border border-black/5 shadow-inner">
+                  <img 
+                    src={`assets/support/qrcodes/${selectedAmount}/alipay.jpg`} 
+                    alt="Alipay"
+                    className="w-24 h-24 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/200x200/00a1e9/ffffff?text=Alipay`;
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[9px] font-bold text-green-500">{t.wechat}</span>
+                <div className="p-2 bg-white rounded-xl border border-black/5 shadow-inner">
+                  <img 
+                    src={`assets/support/qrcodes/${selectedAmount}/wechat.jpg`} 
+                    alt="WeChat"
+                    className="w-24 h-24 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/200x200/07c160/ffffff?text=WeChat`;
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-[9px] text-slate-400 text-center italic">
+              {language === 'zh' ? '此演示即为真实打赏入口，感谢支持！' : 'This demo is a real support entry, thanks!'}
+            </p>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const DemoProgressiveDisclosure = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { language } = useStore();
   return (
@@ -621,6 +828,7 @@ const DraggableValue = ({
   onChange, 
   min = 0, 
   max = 100, 
+  step = 1,
   icon, 
   label 
 }: { 
@@ -628,20 +836,34 @@ const DraggableValue = ({
   onChange: (v: number) => void, 
   min?: number, 
   max?: number, 
+  step?: number,
   icon: React.ReactNode, 
   label: string 
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(value.toString());
+  const inputRef = useEffect(() => {
+    setInputValue(value.toString());
+  }, [value]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isEditing) return;
     setIsDragging(true);
     const startX = e.clientX;
     const startValue = value;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
-      const newValue = Math.min(max, Math.max(min, startValue + Math.round(deltaX / 5)));
-      onChange(newValue);
+      const sensitivity = step < 1 ? 0.01 : 0.5;
+      const change = deltaX * sensitivity;
+      const rawValue = startValue + change;
+      
+      const steppedValue = Math.round(rawValue / step) * step;
+      const newValue = Math.max(min, Math.min(max, steppedValue));
+      
+      const finalValue = parseFloat(newValue.toFixed(step < 1 ? 2 : 0));
+      onChange(finalValue);
     };
 
     const handleMouseUp = () => {
@@ -654,6 +876,17 @@ const DraggableValue = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleInputBlur = () => {
+    setIsEditing(false);
+    let newValue = parseFloat(inputValue);
+    if (isNaN(newValue)) {
+      setInputValue(value.toString());
+      return;
+    }
+    newValue = Math.max(min, Math.min(max, newValue));
+    onChange(newValue);
+  };
+
   return (
     <div className="space-y-1.5 flex-1 min-w-[120px]">
       <div className="flex items-center justify-between px-0.5">
@@ -661,13 +894,29 @@ const DraggableValue = ({
       </div>
       <div 
         onMouseDown={handleMouseDown}
-        className={`flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl cursor-ew-resize select-none transition-all ${isDragging ? 'border-blue-500 shadow-sm' : 'hover:border-black/20 dark:hover:border-white/20'}`}
+        className={`flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl cursor-ew-resize select-none transition-all ${isDragging ? 'border-blue-500 shadow-sm' : 'hover:border-black/20 dark:hover:border-white/20'} ${isEditing ? 'ring-2 ring-blue-500 bg-white dark:bg-black/20' : ''}`}
       >
         <div className="text-slate-400 shrink-0">
           {icon}
         </div>
-        <div className="flex-1 text-sm font-mono font-bold text-slate-700 dark:text-slate-200">
-          {value}
+        <div 
+          className="flex-1 text-right text-sm font-mono font-bold text-slate-700 dark:text-slate-200"
+          onClick={() => setIsEditing(true)}
+        >
+          {isEditing ? (
+            <input
+              autoFocus
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onBlur={handleInputBlur}
+              onKeyDown={(e) => e.key === 'Enter' && handleInputBlur()}
+              className="w-full bg-transparent outline-none text-blue-500 text-right"
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+          ) : (
+            value
+          )}
         </div>
       </div>
     </div>

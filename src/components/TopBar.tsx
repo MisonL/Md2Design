@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
-import { Moon, Sun, Download, Languages, Info, X, ChevronDown, Check, Github, Sparkles, MessageSquare, Check as CheckIcon, RotateCcw } from 'lucide-react';
+import { Moon, Sun, Download, Languages, Info, X, ChevronDown, Check, Github, Sparkles, MessageSquare, Check as CheckIcon, RotateCcw, ThumbsUp } from 'lucide-react';
 import { toPng, toJpeg } from 'html-to-image';
 import { motion, AnimatePresence } from 'framer-motion';
 import JSZip from 'jszip';
@@ -17,15 +17,27 @@ export const TopBar = () => {
   const [showExport, setShowExport] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showSupportTip, setShowSupportTip] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
+  const [selectedSupportAmount, setSelectedSupportAmount] = useState<5 | 15 | null>(null);
 
-  // Onboarding tooltip logic
+  // Onboarding & Support tooltip logic
   useEffect(() => {
-    console.log('Onboarding will show in 1.5s...');
-    const timer = setTimeout(() => {
+    // Onboarding
+    const onboardingTimer = setTimeout(() => {
       setShowOnboarding(true);
     }, 1500);
 
-    return () => clearTimeout(timer);
+    // Support Tip
+    let supportTimer: NodeJS.Timeout;
+    supportTimer = setTimeout(() => {
+      setShowSupportTip(true);
+    }, 1000);
+
+    return () => {
+      clearTimeout(onboardingTimer);
+      if (supportTimer) clearTimeout(supportTimer);
+    };
   }, []);
 
   const closeOnboarding = () => {
@@ -571,13 +583,60 @@ export const TopBar = () => {
              )}
           </div>
 
-          <button
-            onClick={() => setShowContact(true)}
-            className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-inherit opacity-80 hover:opacity-100"
-            title={t.contactAuthor}
-          >
-            <Info size={18} />
-          </button>
+          <div className="relative flex items-center">
+            <button
+              onClick={() => setShowContact(true)}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-inherit opacity-80 hover:opacity-100"
+              title={t.contactAuthor}
+            >
+              <Info size={18} />
+            </button>
+
+            {/* Support Tooltip */}
+            <AnimatePresence>
+              {showSupportTip && (
+                <motion.div
+                  initial={{ 
+                    opacity: 0, 
+                    scale: 0.8,
+                    y: 0,
+                  }}
+                  animate={{ 
+                    opacity: 1, 
+                    scale: 1,
+                    y: 12,
+                  }}
+                  exit={{ 
+                    opacity: 0, 
+                    scale: 0.8,
+                    y: 0,
+                  }}
+                  transition={{ 
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20
+                  }}
+                  className="absolute top-full right-0 whitespace-nowrap z-[100]"
+                >
+                  {/* Arrow Tip */}
+                  <div className="absolute -top-1 right-3.5 w-2 h-2 bg-orange-400/85 dark:bg-orange-500/80 rotate-45 border-l border-t border-white/20" />
+                  
+                  <div className="bg-orange-400/85 dark:bg-orange-500/80 backdrop-blur-md text-white px-4 py-2 rounded-xl shadow-[0_10px_30px_-10px_rgba(251,146,60,0.5)] text-xs font-bold flex items-center gap-2 border border-white/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    欢迎打赏，老板大气，老板永远不死
+                    <button 
+                      onClick={() => {
+                        setShowSupportTip(false);
+                      }}
+                      className="ml-2 p-1 hover:bg-white/20 rounded-full transition-colors"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <a
             href="https://github.com/LuN3cy/Md2Design"
@@ -1103,6 +1162,150 @@ export const TopBar = () => {
                     <div className="font-bold mb-1">{link.main}</div>
                   </a>
                 ))}
+              </div>
+
+              {/* Support Me Button */}
+              <button
+                onClick={() => {
+                  setShowContact(false);
+                  setShowSupport(true);
+                }}
+                className="w-full mt-6 p-4 bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 dark:border-red-500/30 rounded-xl flex items-center justify-center gap-3 text-red-600 dark:text-red-400 font-bold transition-all hover:bg-red-500/20 dark:hover:bg-red-500/30 hover:scale-[1.02] group"
+              >
+                <ThumbsUp size={18} className="group-hover:animate-bounce" />
+                <span>{t.supportMe}</span>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Support Amount Selection Modal */}
+      <AnimatePresence>
+        {showSupport && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowSupport(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-black/20 dark:border-white/20 p-6 rounded-2xl w-full max-w-md shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold">{t.selectAmount}</h3>
+                <button 
+                  onClick={() => setShowSupport(false)}
+                  className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { amount: 5 as const, label: t.fiveRMB, img: 'assets/support/options/5rmb.png' },
+                  { amount: 15 as const, label: t.fifteenRMB, img: 'assets/support/options/15rmb.png' }
+                ].map((item) => (
+                  <button
+                    key={item.amount}
+                    onClick={() => setSelectedSupportAmount(item.amount)}
+                    className="aspect-square relative group overflow-hidden rounded-2xl border border-black/10 dark:border-white/10 transition-all hover:scale-[1.05] hover:shadow-xl active:scale-95"
+                  >
+                    <img 
+                      src={item.img} 
+                      alt={item.label}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                      onError={(e) => {
+                        // Fallback if image doesn't exist yet
+                        (e.target as HTMLImageElement).src = `https://placehold.co/400x400/fee2e2/dc2626?text=${item.label}`;
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                      <span className="text-white font-bold">{item.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {selectedSupportAmount && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            onClick={() => setSelectedSupportAmount(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="bg-white dark:bg-[#1a1a1a] p-8 rounded-3xl w-full max-w-2xl shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setSelectedSupportAmount(null)}
+                className="absolute top-4 right-4 p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-slate-400"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold mb-2">
+                  {selectedSupportAmount === 5 ? t.fiveRMB : t.fifteenRMB} {t.supportAuthor}
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  扫描下方二维码支持作者，您的支持是我的动力！
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                {/* Alipay */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="bg-blue-500 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    {t.alipay}
+                  </div>
+                  <div className="p-4 bg-white rounded-2xl shadow-inner border border-black/5">
+                    <img 
+                      src={`assets/support/qrcodes/${selectedSupportAmount}/alipay.jpg`} 
+                      alt="Alipay QR"
+                      className="w-48 h-48 object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://placehold.co/400x400/00a1e9/ffffff?text=Alipay+${selectedSupportAmount}`;
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* WeChat */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="bg-green-500 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    {t.wechat}
+                  </div>
+                  <div className="p-4 bg-white rounded-2xl shadow-inner border border-black/5">
+                    <img 
+                      src={`assets/support/qrcodes/${selectedSupportAmount}/wechat.jpg`} 
+                      alt="WeChat QR"
+                      className="w-48 h-48 object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://placehold.co/400x400/07c160/ffffff?text=WeChat+${selectedSupportAmount}`;
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </motion.div>
           </motion.div>

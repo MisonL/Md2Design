@@ -172,6 +172,7 @@ export const DraggableNumberInput = ({
   label?: string
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const hasDragged = useRef(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value.toString());
   const startX = useRef(0);
@@ -186,6 +187,12 @@ export const DraggableNumberInput = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       const delta = e.clientX - startX.current;
+      
+      // If moved more than 2 pixels, consider it a drag
+      if (Math.abs(delta) > 2) {
+        hasDragged.current = true;
+      }
+
       const sensitivity = step < 1 ? 0.01 : 0.5;
       const change = delta * sensitivity;
       const rawValue = startValue.current + change;
@@ -200,6 +207,10 @@ export const DraggableNumberInput = ({
     const handleMouseUp = () => {
       setIsDragging(false);
       document.body.style.cursor = '';
+      // Reset drag flag after a short delay to prevent immediate click trigger
+      setTimeout(() => {
+        hasDragged.current = false;
+      }, 50);
     };
 
     if (isDragging) {
@@ -217,8 +228,8 @@ export const DraggableNumberInput = ({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isEditing) return;
-    e.preventDefault();
     setIsDragging(true);
+    hasDragged.current = false;
     startX.current = e.clientX;
     startValue.current = value;
   };
@@ -255,14 +266,25 @@ export const DraggableNumberInput = ({
         </div>
       )}
       <div 
-        className={`relative group flex items-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg overflow-hidden transition-colors hover:bg-black/10 dark:hover:bg-white/10 ${isDragging ? 'bg-black/10 dark:bg-white/10 ring-1 ring-blue-500/50' : ''} ${isEditing ? 'ring-1 ring-blue-500 bg-white dark:bg-black/20' : ''} cursor-ew-resize h-9`}
+        className={`relative group flex items-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl overflow-hidden transition-all hover:bg-black/10 dark:hover:bg-white/10 ${isDragging ? 'border-blue-500 ring-1 ring-blue-500/20' : ''} ${isEditing ? 'ring-2 ring-blue-500 bg-white dark:bg-black/20' : ''} cursor-ew-resize px-3 py-2`}
         onMouseDown={handleMouseDown}
+        onClick={(e) => {
+          if (hasDragged.current) {
+            e.stopPropagation();
+            return;
+          }
+          setIsEditing(true);
+          setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+          }, 0);
+        }}
         title="Drag anywhere to adjust, Click value to type"
       >
-        <div className="pl-3 pr-2 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors pointer-events-none flex items-center h-full">
+        <div className="text-slate-400 dark:text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors pointer-events-none flex items-center shrink-0">
           {icon}
         </div>
-        <div className="flex-1 relative h-full flex items-center justify-end pr-2">
+        <div className="flex-1 relative flex items-center justify-end">
           {isEditing ? (
             <input
               ref={inputRef}
@@ -271,19 +293,13 @@ export const DraggableNumberInput = ({
               onChange={(e) => setInputValue(e.target.value)}
               onBlur={handleInputBlur}
               onKeyDown={handleKeyDown}
-              className="w-12 py-1 text-center font-mono text-xs font-medium bg-white dark:bg-black/40 rounded border border-blue-500 outline-none text-slate-800 dark:text-slate-100 cursor-text shadow-sm"
+              className="w-full bg-transparent outline-none text-blue-500 text-right font-mono text-sm font-bold"
+              onMouseDown={(e) => e.stopPropagation()}
+              autoFocus
             />
           ) : (
             <div 
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-                setTimeout(() => {
-                  inputRef.current?.focus();
-                  inputRef.current?.select();
-                }, 0);
-              }}
-              className="min-w-[32px] px-1 py-1 text-center font-mono text-xs font-medium select-none text-slate-700 dark:text-slate-300 cursor-text transition-colors flex items-center justify-center h-full"
+              className="flex-1 text-right text-sm font-mono font-bold text-slate-700 dark:text-slate-200 select-none transition-colors h-full flex items-center justify-end"
             >
               {value}
             </div>
