@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { HexColorPicker } from 'react-colorful';
 import { PRESET_GRADIENTS } from '../../store';
@@ -171,6 +171,7 @@ export const DraggableNumberInput = ({
   icon: React.ReactNode,
   label?: string
 }) => {
+  const inputId = useId();
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value.toString());
@@ -265,6 +266,9 @@ export const DraggableNumberInput = ({
         <div className="flex-1 relative h-full flex items-center justify-end pr-2">
           {isEditing ? (
             <input
+              id={inputId}
+              name={label || 'number-input'}
+              aria-label={label || 'Number Input'}
               ref={inputRef}
               type="text"
               value={inputValue}
@@ -295,6 +299,7 @@ export const DraggableNumberInput = ({
 };
 
 export const ColorPicker = ({ color, onChange, label }: { color: string, onChange: (color: string) => void, label?: string }) => {
+  const inputId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -364,6 +369,9 @@ export const ColorPicker = ({ color, onChange, label }: { color: string, onChang
         <div className="flex items-center gap-2 w-full">
           <div className="relative flex-1">
             <input 
+              id={inputId}
+              name={label || 'color-input'}
+              aria-label={label || 'Color Input'}
               type="text" 
               value={color.toUpperCase()} 
               onChange={(e) => onChange(e.target.value)}

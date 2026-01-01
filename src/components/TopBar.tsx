@@ -550,6 +550,9 @@ export const TopBar = () => {
                 {previewZoom > 0 ? `${Math.round(previewZoom * 100)}%` : 'Auto'}
             </span>
             <input
+              id="preview-zoom-slider"
+              name="previewZoom"
+              aria-label={t.zoom}
               type="range"
               min="0.2"
               max="4"
@@ -762,14 +765,16 @@ export const TopBar = () => {
                    {/* Folder Name (Only for multiple mode) */}
                    {exportMode === 'multiple' && (
                      <div>
-                        <label className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.folderName}</label>
-                        <input 
-                          type="text" 
-                          value={folderName}
-                          onChange={(e) => setFolderName(e.target.value)}
-                          placeholder="cards-export"
-                          className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-black/30 dark:placeholder-white/20 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
-                        />
+                         <label htmlFor="export-folder-name" className="text-xs font-medium text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-wider">{t.folderName}</label>
+                         <input 
+                           id="export-folder-name"
+                           name="folderName"
+                           type="text" 
+                           value={folderName}
+                           onChange={(e) => setFolderName(e.target.value)}
+                           placeholder="cards-export"
+                           className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-black/30 dark:placeholder-white/20 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
+                         />
                      </div>
                    )}
 
@@ -797,7 +802,10 @@ export const TopBar = () => {
 
                       {namingMode === 'system' ? (
                         <div className="space-y-3">
+                          <label htmlFor="system-custom-name" className="sr-only">{t.namingCustom}</label>
                           <input 
+                            id="system-custom-name"
+                            name="systemCustomName"
                             type="text" 
                             value={namingConfigs.custom}
                             onChange={(e) => setNamingConfigs({ ...namingConfigs, custom: e.target.value })}
@@ -888,6 +896,9 @@ export const TopBar = () => {
 
                                 {part === 'prefix' && (
                                   <input 
+                                    id="naming-prefix-input"
+                                    name="namingPrefix"
+                                    aria-label={t.namingPrefix}
                                     type="text" 
                                     value={namingConfigs.prefix}
                                     onChange={(e) => setNamingConfigs({ ...namingConfigs, prefix: e.target.value })}
@@ -896,6 +907,9 @@ export const TopBar = () => {
                                 )}
                                 {part === 'custom' && (
                                   <input 
+                                    id="naming-custom-input"
+                                    name="namingCustom"
+                                    aria-label={t.namingCustom}
                                     type="text" 
                                     value={namingConfigs.custom}
                                     onChange={(e) => setNamingConfigs({ ...namingConfigs, custom: e.target.value })}
