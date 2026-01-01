@@ -35,7 +35,7 @@ const translations = {
     paddingSync: 'Sync Padding',
     fontFamily: 'Font Family',
     fontSize: 'Font Size',
-    h3FontSize: 'H3 Size',
+
     headingScale: 'H4~H6 Size',
     zoom: 'Preview Zoom',
     editor: 'EDITOR',
@@ -183,7 +183,7 @@ const translations = {
     paddingSync: '同步边距',
     fontFamily: '字体',
     fontSize: '字号',
-    h3FontSize: 'H3 字号',
+
     headingScale: 'H4~H6 字号',
     zoom: '预览缩放',
     editor: '编辑器',
