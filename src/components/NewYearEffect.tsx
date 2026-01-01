@@ -57,11 +57,11 @@ export const NewYearEffect = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-100 pointer-events-auto"
         >
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-yellow-500/30 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-4 relative overflow-hidden group">
             {/* Background Sparkle Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-red-500/10 opacity-50 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-r from-yellow-500/10 via-transparent to-red-500/10 opacity-50 pointer-events-none" />
             
             <div className="flex items-center gap-3 relative z-10">
               <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-white shadow-lg animate-bounce">
@@ -86,7 +86,7 @@ export const NewYearEffect = () => {
             </button>
 
             {/* Shine effect */}
-            <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine" />
+            <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-linear-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine" />
           </div>
         </motion.div>
       )}

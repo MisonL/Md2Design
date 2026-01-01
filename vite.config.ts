@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 
 // Custom plugin to generate fonts.json (from upstream)
+import { type ViteDevServer } from 'vite';
 function generateFontsJson() {
   return {
     name: "generate-fonts-json",
@@ -25,7 +26,7 @@ function generateFontsJson() {
         );
       }
     },
-    handleHotUpdate({ file, server }: { file: string; server: any }) {
+    handleHotUpdate({ file, server }: { file: string; server: ViteDevServer }) {
       if (file.includes("public/fonts")) {
         const fontsDir = path.resolve(__dirname, "public/fonts");
         const files = fs.readdirSync(fontsDir);

@@ -57,11 +57,6 @@ export const Sidebar = () => {
       .then(res => res.json())
       .then(data => {
         setLocalFonts(data);
-        // Inject current font if it's in the list
-        const currentFont = data.find((f: LocalFont) => f.name === cardStyle.fontFamily);
-        if (currentFont) {
-          injectLocalFontFace(currentFont.name, currentFont.filename);
-        }
       })
       .catch(err => console.error('Failed to load local fonts list:', err));
   }, []);
@@ -194,7 +189,7 @@ export const Sidebar = () => {
                           if (o === 'autoHeight') {
                               updateCardStyle({ autoHeight: true });
                           } else {
-                              updateCardStyle({ orientation: o as any, autoHeight: false });
+                              updateCardStyle({ orientation: o as 'portrait' | 'landscape', autoHeight: false });
                           }
                       }}
                       className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-md transition-all ${
@@ -204,7 +199,7 @@ export const Sidebar = () => {
                       }`}
                     >
                       {o === 'portrait' ? <Smartphone size={14} /> : o === 'landscape' ? <MonitorIcon size={14} /> : <Layout size={14} />}
-                      <span className="capitalize">{o === 'autoHeight' ? t.autoHeight : (t as any)[o]}</span>
+                      <span className="capitalize">{o === 'autoHeight' ? t.autoHeight : (o === 'portrait' ? t.portrait : t.landscape)}</span>
                     </button>
                   ))}
                 </div>
@@ -430,7 +425,7 @@ export const Sidebar = () => {
                       {['solid', 'gradient', 'image'].map((type) => (
                         <button 
                           key={type}
-                          onClick={() => updateCardStyle({ backgroundType: type as any })}
+                          onClick={() => updateCardStyle({ backgroundType: type as 'solid' | 'gradient' | 'image' })}
                           className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.backgroundType === type ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                         >
                           {t[type as keyof typeof t]}
@@ -560,7 +555,7 @@ export const Sidebar = () => {
                   {['solid', 'gradient', 'image'].map((type) => (
                     <button 
                       key={type}
-                      onClick={() => updateCardStyle({ cardBackgroundType: type as any })}
+                      onClick={() => updateCardStyle({ cardBackgroundType: type as 'solid' | 'gradient' | 'image' })}
                       className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.cardBackgroundType === type ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                     >
                       {t[type as keyof typeof t]}
@@ -883,12 +878,12 @@ export const Sidebar = () => {
                                  const newFonts = cardStyle.customFonts.map(f => 
                                    f.name === font.name ? { ...f, weight: e.target.checked ? 'variable' : 'normal' } : f
                                  );
-                                 updateCardStyle({ customFonts: newFonts as any });
+                                 updateCardStyle({ customFonts: newFonts });
                                }
                              }}
                              className="rounded border-black/20 dark:border-white/20 bg-black/10 dark:bg-white/10"
                            />
-                           <span>Variable Font (Enable All Weights)</span>
+                           <span>{t.variableFont} ({t.enableAllWeights})</span>
                          </label>
                        </div>
                      )}
@@ -949,7 +944,7 @@ export const Sidebar = () => {
                                {['left', 'center', 'right'].map((pos) => (
                                  <button
                                    key={pos}
-                                   onClick={() => updateCardStyle({ watermark: { ...cardStyle.watermark, position: pos as any } })}
+                                   onClick={() => updateCardStyle({ watermark: { ...cardStyle.watermark, position: pos as 'left' | 'center' | 'right' } })}
                                    className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.watermark.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                                  >
                                    {t[pos as keyof typeof t]}
@@ -999,7 +994,7 @@ export const Sidebar = () => {
                                  {['left', 'center', 'right'].map((pos) => (
                                    <button
                                      key={pos}
-                                     onClick={() => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, position: pos as any } })}
+                                     onClick={() => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, position: pos as 'left' | 'center' | 'right' } })}
                                      className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.pageNumber.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                                    >
                                      {t[pos as keyof typeof t]}

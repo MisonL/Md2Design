@@ -325,6 +325,7 @@ export const ColorPicker = ({ color, onChange, label }: { color: string, onChang
 
   useLayoutEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line
       updatePosition();
     }
   }, [isOpen]);
