@@ -41,8 +41,8 @@ export const SidebarSection = ({ title, icon, children, defaultOpen = false, rig
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className={isOpen ? "overflow-visible" : "overflow-hidden"}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            style={{ overflow: 'hidden' }}
           >
             <div className="px-4 pb-4 pt-0 space-y-4">
               {children}
@@ -68,13 +68,14 @@ export const AdvancedToggle = ({ children, label = "Advanced Options" }: { child
          <div className="h-px bg-current flex-1 opacity-20" />
        </button>
        
-       <AnimatePresence>
+       <AnimatePresence initial={false}>
          {show && (
            <motion.div
              initial={{ height: 0, opacity: 0 }}
              animate={{ height: 'auto', opacity: 1 }}
              exit={{ height: 0, opacity: 0 }}
-             className={show ? "overflow-visible" : "overflow-hidden"}
+             transition={{ duration: 0.2, ease: "easeInOut" }}
+             style={{ overflow: 'hidden' }}
            >
              <div className="space-y-4 pt-1 pb-2">
                {children}

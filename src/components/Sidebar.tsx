@@ -923,21 +923,21 @@ export const Sidebar = () => {
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-medium opacity-70">{t.watermark}</label>
                       <button 
-                        onClick={() => updateCardStyle({ watermark: { ...cardStyle.watermark, enabled: !cardStyle.watermark.enabled } })}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.watermark.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
+                        onClick={() => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), enabled: !cardStyle.watermark?.enabled } } as any)}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.watermark?.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
                       >
-                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.watermark.enabled ? 'left-6' : 'left-1'}`} />
+                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.watermark?.enabled ? 'left-6' : 'left-1'}`} />
                       </button>
                     </div>
                     
-                    {cardStyle.watermark.enabled && (
+                    {cardStyle.watermark?.enabled && (
                       <div className="p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 space-y-3">
                         <div>
                           <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.content}</label>
                           <input 
                             type="text" 
-                            value={cardStyle.watermark.content}
-                            onChange={(e) => updateCardStyle({ watermark: { ...cardStyle.watermark, content: e.target.value } })}
+                            value={cardStyle.watermark?.content}
+                            onChange={(e) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), content: e.target.value } } as any)}
                             className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded p-2 text-xs focus:border-black/30 dark:focus:border-white/30 focus:outline-none text-slate-900 dark:text-white"
                           />
                         </div>
@@ -949,8 +949,8 @@ export const Sidebar = () => {
                                {['left', 'center', 'right'].map((pos) => (
                                  <button
                                    key={pos}
-                                   onClick={() => updateCardStyle({ watermark: { ...cardStyle.watermark, position: pos as any } })}
-                                   className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.watermark.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
+                                   onClick={() => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), position: pos as any } } as any)}
+                                   className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.watermark?.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                                  >
                                    {t[pos as keyof typeof t]}
                                  </button>
@@ -961,17 +961,17 @@ export const Sidebar = () => {
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.opacity}</label>
-                              <DraggableNumberInput value={cardStyle.watermark.opacity} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, opacity: val } })} icon={<ParameterIcon type="opacity" />} />
+                              <DraggableNumberInput value={cardStyle.watermark?.opacity || 0.5} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), opacity: val } } as any)} icon={<ParameterIcon type="opacity" />} />
                             </div>
                             <div>
                               <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.fontSize}</label>
-                              <DraggableNumberInput value={cardStyle.watermark.fontSize} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, fontSize: val } })} icon={<ParameterIcon type="fontSize" />} />
+                              <DraggableNumberInput value={cardStyle.watermark?.fontSize || 12} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), fontSize: val } } as any)} icon={<ParameterIcon type="fontSize" />} />
                             </div>
                           </div>
                           <ColorPicker 
                             label={t.text}
-                            color={cardStyle.watermark.color || cardStyle.textColor} 
-                            onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, color: val } })} 
+                            color={cardStyle.watermark?.color || cardStyle.textColor} 
+                            onChange={(val) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), color: val } } as any)} 
                           />
                         </AdvancedToggle>
                       </div>
@@ -983,14 +983,14 @@ export const Sidebar = () => {
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-medium opacity-70">{t.pageNumber}</label>
                       <button 
-                        onClick={() => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, enabled: !cardStyle.pageNumber.enabled } })}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.pageNumber.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
+                        onClick={() => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), enabled: !cardStyle.pageNumber?.enabled } } as any)}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.pageNumber?.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
                       >
-                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.pageNumber.enabled ? 'left-6' : 'left-1'}`} />
+                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.pageNumber?.enabled ? 'left-6' : 'left-1'}`} />
                       </button>
                     </div>
                     
-                    {cardStyle.pageNumber.enabled && (
+                    {cardStyle.pageNumber?.enabled && (
                       <div className="p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 space-y-3">
                         <AdvancedToggle label={t.advancedSettings}>
                             <div>
@@ -999,8 +999,8 @@ export const Sidebar = () => {
                                  {['left', 'center', 'right'].map((pos) => (
                                    <button
                                      key={pos}
-                                     onClick={() => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, position: pos as any } })}
-                                     className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.pageNumber.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
+                                     onClick={() => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), position: pos as any } } as any)}
+                                     className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.pageNumber?.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                                    >
                                      {t[pos as keyof typeof t]}
                                    </button>
@@ -1011,17 +1011,17 @@ export const Sidebar = () => {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.opacity}</label>
-                                <DraggableNumberInput value={cardStyle.pageNumber.opacity} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, opacity: val } })} icon={<ParameterIcon type="opacity" />} />
+                                <DraggableNumberInput value={cardStyle.pageNumber?.opacity || 0.5} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), opacity: val } } as any)} icon={<ParameterIcon type="opacity" />} />
                               </div>
                               <div>
                                 <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.fontSize}</label>
-                                <DraggableNumberInput value={cardStyle.pageNumber.fontSize} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, fontSize: val } })} icon={<ParameterIcon type="fontSize" />} />
+                                <DraggableNumberInput value={cardStyle.pageNumber?.fontSize || 12} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), fontSize: val } } as any)} icon={<ParameterIcon type="fontSize" />} />
                               </div>
                             </div>
                             <ColorPicker 
                               label={t.text}
-                              color={cardStyle.pageNumber.color || cardStyle.textColor} 
-                              onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, color: val } })} 
+                              color={cardStyle.pageNumber?.color || cardStyle.textColor} 
+                              onChange={(val) => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), color: val } } as any)} 
                             />
                         </AdvancedToggle>
                       </div>

@@ -501,7 +501,7 @@ export const useStore = create<AppState>()(
     {
       name: 'md2card-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           // Migration for v0 to v1: Add headingScale and contentPadding
@@ -537,6 +537,16 @@ export const useStore = create<AppState>()(
                 left: persistedState.cardStyle.contentPadding ?? 32
               },
               cardPaddingSync: persistedState.cardStyle.cardPaddingSync ?? true,
+            };
+          }
+        }
+        if (version <= 3) {
+          // Migration for v3 to v4: Add watermark and pageNumber
+          if (persistedState.cardStyle) {
+            persistedState.cardStyle = {
+              ...persistedState.cardStyle,
+              watermark: persistedState.cardStyle.watermark ?? INITIAL_CARD_STYLE.watermark,
+              pageNumber: persistedState.cardStyle.pageNumber ?? INITIAL_CARD_STYLE.pageNumber,
             };
           }
         }

@@ -501,7 +501,7 @@ const Card = ({
             </div>
 
             {/* Footer (Watermark & Page Number) - Positioned in bottom padding */}
-            {(cardStyle.pageNumber.enabled || cardStyle.watermark.enabled) && (
+            {(cardStyle.pageNumber?.enabled || cardStyle.watermark?.enabled) && (
               <div 
                 className="absolute bottom-0 left-0 right-0 flex items-center font-mono uppercase tracking-widest pointer-events-auto"
                 style={{ 
@@ -513,31 +513,31 @@ const Card = ({
               >
                 {/* Left */}
                 <div className="absolute left-0 pl-[inherit] flex items-center gap-4 h-full">
-                  {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'left' && (
-                      <span style={{ color: cardStyle.pageNumber.color || cardStyle.textColor, opacity: cardStyle.pageNumber.opacity, fontSize: `${cardStyle.pageNumber.fontSize}px` }} className="font-bold">{index + 1}</span>
+                  {cardStyle.pageNumber?.enabled && cardStyle.pageNumber?.position === 'left' && (
+                      <span style={{ color: cardStyle.pageNumber?.color || cardStyle.textColor, opacity: cardStyle.pageNumber?.opacity, fontSize: `${cardStyle.pageNumber?.fontSize}px` }} className="font-bold">{index + 1}</span>
                   )}
-                  {cardStyle.watermark.enabled && cardStyle.watermark.position === 'left' && (
-                      <span style={{ color: cardStyle.watermark.color || cardStyle.textColor, opacity: cardStyle.watermark.opacity, fontSize: `${cardStyle.watermark.fontSize}px` }}>{cardStyle.watermark.content}</span>
+                  {cardStyle.watermark?.enabled && cardStyle.watermark?.position === 'left' && (
+                      <span style={{ color: cardStyle.watermark?.color || cardStyle.textColor, opacity: cardStyle.watermark?.opacity, fontSize: `${cardStyle.watermark?.fontSize}px` }}>{cardStyle.watermark?.content}</span>
                   )}
                 </div>
 
                 {/* Center */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 h-full">
-                  {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'center' && (
-                      <span style={{ color: cardStyle.pageNumber.color || cardStyle.textColor, opacity: cardStyle.pageNumber.opacity, fontSize: `${cardStyle.pageNumber.fontSize}px` }} className="font-bold">{index + 1}</span>
+                  {cardStyle.pageNumber?.enabled && cardStyle.pageNumber?.position === 'center' && (
+                      <span style={{ color: cardStyle.pageNumber?.color || cardStyle.textColor, opacity: cardStyle.pageNumber?.opacity, fontSize: `${cardStyle.pageNumber?.fontSize}px` }} className="font-bold">{index + 1}</span>
                   )}
-                  {cardStyle.watermark.enabled && cardStyle.watermark.position === 'center' && (
-                      <span style={{ color: cardStyle.watermark.color || cardStyle.textColor, opacity: cardStyle.watermark.opacity, fontSize: `${cardStyle.watermark.fontSize}px` }}>{cardStyle.watermark.content}</span>
+                  {cardStyle.watermark?.enabled && cardStyle.watermark?.position === 'center' && (
+                      <span style={{ color: cardStyle.watermark?.color || cardStyle.textColor, opacity: cardStyle.watermark?.opacity, fontSize: `${cardStyle.watermark?.fontSize}px` }}>{cardStyle.watermark?.content}</span>
                   )}
                 </div>
 
                 {/* Right */}
                 <div className="absolute right-0 pr-[inherit] flex items-center gap-4 h-full">
-                  {cardStyle.watermark.enabled && cardStyle.watermark.position === 'right' && (
-                      <span style={{ color: cardStyle.watermark.color || cardStyle.textColor, opacity: cardStyle.watermark.opacity, fontSize: `${cardStyle.watermark.fontSize}px` }}>{cardStyle.watermark.content}</span>
+                  {cardStyle.watermark?.enabled && cardStyle.watermark?.position === 'right' && (
+                      <span style={{ color: cardStyle.watermark?.color || cardStyle.textColor, opacity: cardStyle.watermark?.opacity, fontSize: `${cardStyle.watermark?.fontSize}px` }}>{cardStyle.watermark?.content}</span>
                   )}
-                  {cardStyle.pageNumber.enabled && cardStyle.pageNumber.position === 'right' && (
-                      <span style={{ color: cardStyle.pageNumber.color || cardStyle.textColor, opacity: cardStyle.pageNumber.opacity, fontSize: `${cardStyle.pageNumber.fontSize}px` }} className="font-bold">{index + 1}</span>
+                  {cardStyle.pageNumber?.enabled && cardStyle.pageNumber?.position === 'right' && (
+                      <span style={{ color: cardStyle.pageNumber?.color || cardStyle.textColor, opacity: cardStyle.pageNumber?.opacity, fontSize: `${cardStyle.pageNumber?.fontSize}px` }} className="font-bold">{index + 1}</span>
                   )}
                 </div>
               </div>
