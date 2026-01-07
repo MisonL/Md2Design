@@ -1,5 +1,5 @@
 import { motion, AnimatePresence, useMotionValue, useAnimation } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun, StretchHorizontal, MousePointer2, Crop } from 'lucide-react';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun, Type, FileText, Bold, Italic, Heading1, Heading2, StretchHorizontal, MousePointer2, Crop } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';

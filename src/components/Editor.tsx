@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, Quote, Heading1, Heading2, Link, Image as ImageIcon, Check, Strikethrough } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, Quote, Heading1, Heading2, Link, Image as ImageIcon, Check, Strikethrough, Type } from 'lucide-react';
 import { htmlToMarkdown } from '../utils/turndown';
 import { paginateMarkdown } from '../utils/pagination';
+import { marked } from 'marked';
 
 export const Editor = () => {
   const { markdown, setMarkdown, addCardImage, cardStyle, isEditorOpen, setIsEditorOpen } = useStore();
