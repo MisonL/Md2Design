@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import { motion } from 'framer-motion';
 import { Rnd } from 'react-rnd';
-import { Trash2, Move, Maximize2, Minimize2, StretchHorizontal, Crop, Square } from 'lucide-react';
+import { Trash2, Maximize2, Minimize2, StretchHorizontal, Crop, Square } from 'lucide-react';
 
 const Card = memo(({ 
   content, 
