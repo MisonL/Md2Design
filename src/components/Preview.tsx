@@ -52,6 +52,8 @@ const Card = memo(({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedImageId, index, removeCardImage, setSelectedImageId]);
   
+  const centerX = width / 2;
+
   // Dynamic styles based on settings
   const outerStyle = {
     width: `${width}px`,
@@ -243,7 +245,7 @@ const Card = memo(({
       const isEmpty = !children || (Array.isArray(children) && children.length === 0);
       return (
         <p 
-          style={{ color: cardStyle.textColor }} 
+          style={{ color: cardStyle.textColor, fontSize: 'inherit' }} 
           className="mb-4 leading-relaxed opacity-90 first:mt-0 min-h-[1.5em]" 
           {...props}
         >
@@ -251,9 +253,9 @@ const Card = memo(({
         </p>
       );
     },
-    ul: ({ node: _node, ...props }: any) => <ul style={{color: cardStyle.textColor}} className="mb-4 list-disc list-outside !pl-5 m-0 space-y-1" {...props} />,
-    ol: ({ node: _node, ...props }: any) => <ol style={{color: cardStyle.textColor}} className="mb-4 list-decimal list-outside !pl-6 m-0 space-y-1" {...props} />,
-    li: ({ node: _node, ...props }: any) => <li className="marker:opacity-70 [&>p]:inline" {...props} />,
+    ul: ({ node: _node, ...props }: any) => <ul style={{color: cardStyle.textColor, fontSize: 'inherit'}} className="mb-4 list-disc list-outside !pl-5 m-0 space-y-1" {...props} />,
+    ol: ({ node: _node, ...props }: any) => <ol style={{color: cardStyle.textColor, fontSize: 'inherit'}} className="mb-4 list-decimal list-outside !pl-6 m-0 space-y-1" {...props} />,
+    li: ({ node: _node, ...props }: any) => <li style={{ fontSize: 'inherit' }} className="marker:opacity-70 [&>p]:inline" {...props} />,
     table: ({ node: _node, ...props }: any) => <div className="overflow-x-auto mb-6 rounded-lg opacity-90"><table className="w-full text-left text-sm border-collapse border-none" {...props} /></div>,
     thead: ({ node: _node, ...props }: any) => <thead className="bg-black/5 dark:bg-white/10 font-semibold border-none" {...props} />,
     tbody: ({ node: _node, ...props }: any) => <tbody className="border-none" {...props} />,
@@ -266,7 +268,9 @@ const Card = memo(({
       <blockquote 
         style={{ 
           borderLeft: `4px solid ${cardStyle.blockquoteBorderColor || cardStyle.accentColor}`, 
-          backgroundColor: cardStyle.blockquoteBackgroundColor 
+          backgroundColor: cardStyle.blockquoteBackgroundColor,
+          color: cardStyle.textColor,
+          fontSize: 'inherit'
         }} 
         className="pl-4 py-2 my-4 italic opacity-90 rounded-r-lg rounded-bl-sm [&>p:last-child]:mb-0 [&>p:first-child]:mt-0 break-words before:content-none after:content-none [&_p]:before:content-none [&_p]:after:content-none" 
         {...props} 
@@ -380,7 +384,8 @@ const Card = memo(({
                 style={{ 
                   padding: 0,
                   maxHeight: cardStyle.autoHeight ? 'none' : '100%',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  fontSize: `${cardStyle.fontSize}px`
                 }}
               >
                 <ReactMarkdown
@@ -397,7 +402,7 @@ const Card = memo(({
                 className="absolute top-0 bottom-0 w-px bg-blue-500/50 z-[100] pointer-events-none"
                 style={{ 
                   height: '100%', 
-                  left: '50%', 
+                  left: `${centerX}px`, 
                   transform: 'translateX(-0.5px)' 
                 }}
               />
@@ -418,23 +423,30 @@ const Card = memo(({
                     }
                   }}
                   onDrag={(_e, d) => {
-                    const centerX = width / 2;
-                    const imageCenterX = d.x + image.width / 2;
-                    const snapThreshold = 10;
-                    const isSnapped = Math.abs(imageCenterX - centerX) < snapThreshold;
-                    setIsSnapX(isSnapped);
-                  }}
-                  onDragStop={(_e, d) => {
-                    setDraggingId(null);
-                    setIsSnapX(false);
-                    const centerX = width / 2;
-                    const imageCenterX = d.x + image.width / 2;
-                    const snapThreshold = 10;
-                    const finalX = Math.abs(imageCenterX - centerX) < snapThreshold 
-                      ? centerX - image.width / 2 
-                      : d.x;
-                    updateCardImage(index, image.id, { x: finalX, y: d.y });
-                  }}
+                      const imageCenterX = d.x + (image.width / 2);
+                      
+                      let newX = d.x;
+                      const isSnapped = Math.abs(imageCenterX - centerX) < 10;
+                      
+                      if (isSnapped) {
+                        newX = centerX - (image.width / 2);
+                      }
+                      
+                      updateCardImage(index, image.id, { x: newX, y: d.y });
+                      setIsSnapX(isSnapped);
+                    }}
+                    onDragStop={(_e, d) => {
+                      setDraggingId(null);
+                      setIsSnapX(false);
+                      
+                      const imageCenterX = d.x + (image.width / 2);
+                      
+                      const finalX = Math.abs(imageCenterX - centerX) < 10 
+                        ? centerX - (image.width / 2) 
+                        : d.x;
+                      
+                      updateCardImage(index, image.id, { x: finalX, y: d.y });
+                    }}
                   onResizeStart={() => setDraggingId(image.id)}
                   onResize={(_e, _direction, ref, _delta, position) => {
                     const newWidth = parseInt(ref.style.width);
