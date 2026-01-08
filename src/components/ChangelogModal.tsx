@@ -21,6 +21,27 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   // Update data
   const updates = [
     {
+      version: 'v1.8.4',
+      date: '2026-01-08',
+      title: {
+        en: 'Editor Layout & Alignment Polish',
+        zh: '编辑器布局与对齐优化'
+      },
+      changes: {
+        en: [
+          '1. Added text alignment (center/left/right) and ordered list buttons.',
+          '2. Optimized editor UI display.',
+          '3. Special thanks to anonymous user feedback.',
+        ],
+        zh: [
+          '1.新增文本居中/左右对齐排列编辑功能以及有序列表按钮；',
+          '2.优化编辑器功能UI显示；',
+          '3.本次更新感谢匿名用户的反馈。',
+        ]
+      },
+      demo: 'v184-features'
+    },
+    {
       version: 'v1.8.3',
       date: '2026-01-06',
       title: {
@@ -419,7 +440,9 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                     return (
                       <div key={minorVersion} className="space-y-1">
                         {/* Minor Version Header */}
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.02, x: 5 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => {
                             if (hasMultiple) {
                               setExpandedGroups(prev => ({ ...prev, [minorVersion]: !prev[minorVersion] }));
@@ -429,8 +452,8 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                           }}
                           className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${
                             isSelectedInGroup && (!hasMultiple || !isExpanded)
-                              ? 'bg-white dark:bg-white/10 shadow-md dark:shadow-black/40' 
-                              : 'hover:bg-black/5 dark:hover:bg-white/5'
+                              ? 'bg-white dark:bg-white/10 shadow-md dark:shadow-black/40 border border-black/5 dark:border-white/10' 
+                              : 'hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                           }`}
                         >
                           <div className="flex items-center gap-3">
@@ -456,14 +479,16 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                           {isSelectedInGroup && (!hasMultiple || !isExpanded) && (
                             <ChevronRight size={14} className="text-blue-500 opacity-100" />
                           )}
-                        </button>
+                        </motion.button>
 
                         {/* Patch Versions (Secondary Menu) */}
                         {hasMultiple && isExpanded && (
                           <div className="ml-4 pl-2 border-l border-black/5 dark:border-white/10 space-y-1 py-1">
                             {group.map((update) => (
-                              <button
+                              <motion.button
                                 key={update.version}
+                                whileHover={{ x: 3, backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
+                                whileTap={{ scale: 0.98 }}
                                 onClick={() => setSelectedVersion(update.version)}
                                 className={`w-full text-left px-4 py-2.5 rounded-lg transition-all flex items-center justify-between group ${
                                   selectedVersion === update.version 
@@ -477,7 +502,7 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                                 <div className="text-[9px] opacity-60 font-medium">
                                   {update.date.split('-').slice(1).join('/')}
                                 </div>
-                              </button>
+                              </motion.button>
                             ))}
                           </div>
                         )}
@@ -522,14 +547,50 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                       {language === 'zh' ? currentUpdate.title.zh : currentUpdate.title.en}
                     </h2>
 
-                    <div className="space-y-3 mb-10">
-                      {(language === 'zh' ? currentUpdate.changes.zh : currentUpdate.changes.en).map((change, i) => (
-                        <div key={i} className="flex items-start gap-3 text-slate-600 dark:text-slate-300 leading-relaxed group">
-                          <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500/40 group-hover:bg-blue-500 transition-colors shrink-0" />
-                          <span>{change}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <motion.div 
+                      className="space-y-3 mb-10"
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        visible: {
+                          transition: {
+                            staggerChildren: 0.1
+                          }
+                        }
+                      }}
+                    >
+                      {(language === 'zh' ? currentUpdate.changes.zh : currentUpdate.changes.en).map((change, i) => {
+                        const isThanks = change.includes('感谢') || change.includes('thanks');
+                        return (
+                          <motion.div 
+                            key={i} 
+                            variants={{
+                              hidden: { opacity: 0, x: -10 },
+                              visible: { opacity: 1, x: 0 }
+                            }}
+                            whileHover={{ x: 5 }}
+                            className={`flex items-start gap-3 leading-relaxed group cursor-default py-2 px-3 rounded-xl transition-all ${
+                              isThanks 
+                                ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/10 text-blue-700 dark:text-blue-300 shadow-sm' 
+                                : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'
+                            }`}
+                          >
+                            <div className={`mt-2 w-1.5 h-1.5 rounded-full shrink-0 transition-all ${
+                              isThanks 
+                                ? 'bg-blue-500 animate-pulse' 
+                                : 'bg-blue-500/40 group-hover:bg-blue-500 group-hover:scale-125'
+                            }`} />
+                            <span className={`transition-colors ${
+                              isThanks 
+                                ? 'font-medium' 
+                                : 'group-hover:text-slate-900 dark:group-hover:text-white'
+                            }`}>
+                              {change}
+                            </span>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
 
                     {/* Interactive Demo Section */}
                     {currentUpdate.demo && (
@@ -542,6 +603,12 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                               {language === 'zh' ? '功能演示' : 'Feature Demo'}
                             </h3>
                          </div>
+
+                         {currentUpdate.demo === 'v184-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoAlignmentAndList />
+                           </div>
+                         )}
 
                          {currentUpdate.demo === 'v183-features' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
@@ -652,7 +719,100 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   );
 };
 
- const DemoManualInput = () => {
+ const DemoAlignmentAndList = () => {
+  const { language } = useStore();
+  const [align, setAlign] = useState<'left' | 'center' | 'right'>('center');
+  const [listType, setListType] = useState<'none' | 'bullet' | 'ordered'>('none');
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '对齐与列表排版演示' : 'Alignment & List Demo'}
+      </div>
+
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-6">
+        {/* Mock Toolbar */}
+        <div className="flex items-center justify-center gap-2 pb-4 border-b border-black/5 dark:border-white/5">
+          <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+            {(['left', 'center', 'right'] as const).map((a) => (
+              <button
+                key={a}
+                onClick={() => setAlign(a)}
+                className={`p-2 rounded-lg transition-all ${align === a ? 'bg-white dark:bg-white/10 shadow-sm text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                {a === 'left' ? <Layout className="rotate-0" size={16} /> : a === 'center' ? <Layout className="rotate-0" size={16} /> : <Layout className="rotate-0" size={16} />}
+                {a === 'left' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
+                ) : a === 'center' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-px h-6 bg-black/5 dark:border-white/5" />
+
+          <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+            <button
+              onClick={() => setListType(listType === 'bullet' ? 'none' : 'bullet')}
+              className={`p-2 rounded-lg transition-all ${listType === 'bullet' ? 'bg-white dark:bg-white/10 shadow-sm text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setListType(listType === 'ordered' ? 'none' : 'ordered')}
+              className={`p-2 rounded-lg transition-all ${listType === 'ordered' ? 'bg-white dark:bg-white/10 shadow-sm text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <span className="text-[10px] font-bold">1.</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mock Content Area */}
+        <div className="min-h-[120px] flex flex-col justify-center px-4">
+          <motion.div
+            layout
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            style={{ textAlign: align }}
+            className="space-y-2"
+          >
+            <motion.h4 layout className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              {language === 'zh' ? '实时预览效果' : 'Real-time Preview'}
+            </motion.h4>
+            
+            <motion.div layout className="space-y-1.5">
+              {listType === 'none' ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {language === 'zh' 
+                    ? '点击上方的对齐按钮或列表按钮，观察此段文字的变化。我们采用了全新的渲染逻辑，确保排版整洁无空行。' 
+                    : 'Click the buttons above to see the magic. Our new rendering logic ensures a clean layout with no extra vertical space.'}
+                </p>
+              ) : (
+                <div className={`text-xs text-slate-500 dark:text-slate-400 space-y-1 ${align === 'center' ? 'flex flex-col items-center' : align === 'right' ? 'flex flex-col items-end' : ''}`}>
+                  {[1, 2, 3].map((i) => (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      key={i} 
+                      className="flex items-center gap-2"
+                    >
+                      <span className="font-bold text-blue-500">{listType === 'bullet' ? '•' : `${i}.`}</span>
+                      <span>{language === 'zh' ? `这是第 ${i} 个列表项目` : `List item number ${i}`}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoManualInput = () => {
   const { language } = useStore();
   const [val, setVal] = useState(20);
 

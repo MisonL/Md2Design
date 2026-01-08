@@ -276,7 +276,7 @@ const INITIAL_CARD_STYLE: CardStyle = {
   cardPaddingSync: true,
   customCSS: '',
       template: 'default',
-      fontSize: 16,
+  fontSize: 18,
   h1FontSize: 32,
   h2FontSize: 24,
   h3FontSize: 20,

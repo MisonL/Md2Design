@@ -4,6 +4,7 @@ import { getCardDimensions } from '../utils/cardUtils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import rehypeRaw from 'rehype-raw';
 import { motion } from 'framer-motion';
 import { Rnd } from 'react-rnd';
 import { Trash2, Maximize2, StretchHorizontal, Crop, Square } from 'lucide-react';
@@ -173,68 +174,77 @@ const Card = memo(({
   };
 
   const components = useMemo(() => ({
-    h1: ({ node: _node, ...props }: any) => (
-      <div className="flex flex-col items-center mb-2 mt-4 first:mt-0">
-        <h1 style={{color: cardStyle.h1Color || cardStyle.textColor, fontSize: `${cardStyle.h1FontSize}px`}} className="font-bold mb-1 text-center" {...props} />
-        <div className="h-1 w-24 rounded-full" style={{backgroundColor: cardStyle.h1LineColor || cardStyle.accentColor}} />
-      </div>
+    h1: ({ node: _node, style, ...props }: any) => (
+      <h1 
+        style={{
+          color: cardStyle.h1Color || cardStyle.textColor, 
+          fontSize: `${cardStyle.h1FontSize}px`,
+          borderBottom: `4px solid ${cardStyle.h1LineColor || cardStyle.accentColor}`,
+          ...style
+        }} 
+        className="font-bold mb-4 mt-4 first:mt-0 pb-1" 
+        {...props} 
+      />
     ),
-    h2: ({ node: _node, ...props }: any) => (
-      <div className="flex justify-center mb-2 mt-4 first:mt-0">
-        <h2 
-          style={{
-            backgroundColor: cardStyle.h2BackgroundColor || cardStyle.accentColor, 
-            color: cardStyle.h2Color || '#fff',
-            fontSize: `${cardStyle.h2FontSize}px`
-          }} 
-          className="font-bold px-4 py-1.5 shadow-md rounded-lg" 
-          {...props} 
-        />
-      </div>
+    h2: ({ node: _node, style, ...props }: any) => (
+      <h2 
+        style={{
+          backgroundColor: cardStyle.h2BackgroundColor || cardStyle.accentColor, 
+          color: cardStyle.h2Color || '#fff',
+          fontSize: `${cardStyle.h2FontSize}px`,
+          ...style
+        }} 
+        className="font-bold px-4 py-1.5 shadow-md rounded-lg mb-4 mt-4 first:mt-0 inline-block" 
+        {...props} 
+      />
     ),
-    h3: ({ node: _node, ...props }: any) => (
+    h3: ({ node: _node, style, ...props }: any) => (
       <h3 
         style={{
           color: cardStyle.h3Color || cardStyle.textColor,
           borderLeftColor: cardStyle.h3LineColor || cardStyle.accentColor,
-          fontSize: `${cardStyle.h3FontSize}px`
+          fontSize: `${cardStyle.h3FontSize}px`,
+          ...style
         }} 
         className="font-bold mb-4 mt-4 first:mt-0 pl-3 border-l-4" 
         {...props} 
       />
     ),
-    h4: ({ node: _node, ...props }: any) => (
+    h4: ({ node: _node, style, ...props }: any) => (
        <h4
         style={{
           color: cardStyle.textColor,
-          fontSize: `${cardStyle.headingScale * 1.125}rem`
+          fontSize: `${cardStyle.headingScale * 1.125}rem`,
+          ...style
         }}
         className="font-bold mb-2 mt-4 first:mt-0"
         {...props}
        />
     ),
-    h5: ({ node: _node, ...props }: any) => (
+    h5: ({ node: _node, style, ...props }: any) => (
        <h5
         style={{
           color: cardStyle.textColor,
-          fontSize: `${cardStyle.headingScale * 1}rem`
+          fontSize: `${cardStyle.headingScale * 1}rem`,
+          ...style
         }}
         className="font-bold mb-2 mt-4 first:mt-0"
         {...props}
        />
     ),
-    h6: ({ node: _node, ...props }: any) => (
+    h6: ({ node: _node, style, ...props }: any) => (
        <h6
         style={{
           color: cardStyle.textColor,
-          fontSize: `${cardStyle.headingScale * 0.875}rem`
+          fontSize: `${cardStyle.headingScale * 0.875}rem`,
+          ...style
         }}
-        className="font-bold mb-2 mt-4 first:mt-0 opacity-80"
+        className="font-bold mb-2 mt-4 first:mt-0"
         {...props}
        />
     ),
-    del: ({ node: _node, ...props }: any) => <del style={{color: cardStyle.textColor, opacity: 0.7}} {...props} />,
-    p: ({ node: _node, children, ...props }: any) => {
+    del: ({ node: _node, style, ...props }: any) => <del style={{color: cardStyle.textColor, opacity: 0.7, ...style}} {...props} />,
+    p: ({ node: _node, children, style, ...props }: any) => {
       // Check if children is just the &zwnj; character
       const isZwnj = Array.isArray(children) 
         ? children.length === 1 && children[0] === '\u200C'
@@ -245,7 +255,7 @@ const Card = memo(({
       const isEmpty = !children || (Array.isArray(children) && children.length === 0);
       return (
         <p 
-          style={{ color: cardStyle.textColor, fontSize: 'inherit' }} 
+          style={{ color: cardStyle.textColor, fontSize: 'inherit', ...style }} 
           className="mb-4 leading-relaxed opacity-90 first:mt-0 min-h-[1.5em]" 
           {...props}
         >
@@ -253,6 +263,31 @@ const Card = memo(({
         </p>
       );
     },
+    div: ({ node: _node, style, children, ...props }: any) => {
+       // If it's a wrapper for alignment, we don't want extra margin
+       const isAlignment = style?.textAlign;
+       return (
+         <div 
+           style={{ color: cardStyle.textColor, fontSize: 'inherit', ...style }} 
+           className={`${isAlignment ? 'my-0' : 'mb-4'} leading-relaxed opacity-90 first:mt-0 min-h-[1.5em]`} 
+           {...props} 
+         >
+           {children}
+         </div>
+       );
+     },
+     span: ({ node: _node, style, children, ...props }: any) => {
+       const isAlignment = style?.textAlign;
+       return (
+         <span 
+           style={{ color: cardStyle.textColor, fontSize: 'inherit', ...style }} 
+           className={`${isAlignment ? 'block my-0' : ''} leading-relaxed opacity-90`} 
+           {...props} 
+         >
+           {children}
+         </span>
+       );
+     },
     ul: ({ node: _node, ...props }: any) => <ul style={{color: cardStyle.textColor, fontSize: 'inherit'}} className="mb-4 list-disc list-outside !pl-5 m-0 space-y-1" {...props} />,
     ol: ({ node: _node, ...props }: any) => <ol style={{color: cardStyle.textColor, fontSize: 'inherit'}} className="mb-4 list-decimal list-outside !pl-6 m-0 space-y-1" {...props} />,
     li: ({ node: _node, ...props }: any) => <li style={{ fontSize: 'inherit' }} className="marker:opacity-70 [&>p]:inline" {...props} />,
@@ -382,14 +417,15 @@ const Card = memo(({
               <div 
                 className="prose prose-sm max-w-none flex-1 pointer-events-auto overflow-hidden break-words [&>*:first-child]:mt-0 prose-hr:hidden prose-blockquote:before:content-none prose-blockquote:after:content-none prose-blockquote:border-none [&_*]:border-none !prose-quotes-none"
                 style={{ 
-                  padding: 0,
-                  maxHeight: cardStyle.autoHeight ? 'none' : '100%',
-                  fontFamily: 'inherit',
-                  fontSize: `${cardStyle.fontSize}px`
-                }}
+                padding: 0,
+                maxHeight: cardStyle.autoHeight ? 'none' : '100%',
+                fontFamily: 'inherit',
+                fontSize: `${cardStyle.fontSize}px`
+              }}
               >
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
+                  rehypePlugins={[rehypeRaw]}
                   components={components}
                 >
                   {processedContent}
