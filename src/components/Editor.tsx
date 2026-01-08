@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, ListOrdered, Quote, Heading1, Heading2, Heading3, Heading4, Link, Image as ImageIcon, Check, Strikethrough, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, ListOrdered, Quote, Heading1, Heading2, Heading3, Heading4, Link, Image as ImageIcon, Check, Strikethrough, AlignLeft, AlignCenter, AlignRight, CornerDownLeft } from 'lucide-react';
 import { htmlToMarkdown } from '../utils/turndown';
 import { paginateMarkdown } from '../utils/pagination';
 
@@ -44,6 +44,28 @@ export const Editor = () => {
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
+  };
+
+  const insertBlankLine = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    // Check if we are at the beginning of a line or if there's text before
+    const textBefore = markdown.substring(0, start);
+    const needsNewLineBefore = textBefore.length > 0 && !textBefore.endsWith('\n');
+    
+    const insert = (needsNewLineBefore ? '\n' : '') + '<br/>\n';
+    const newText = markdown.substring(0, start) + insert + markdown.substring(end);
+
+    setMarkdown(newText);
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + insert.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
   };
 
@@ -536,6 +558,13 @@ export const Editor = () => {
                       className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100"
                     >
                       <ImageIcon size={16} />
+                    </button>
+                    <button 
+                      onMouseDown={(e) => { e.preventDefault(); insertBlankLine(); }} 
+                      title="插入空行" 
+                      className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100"
+                    >
+                      <CornerDownLeft size={16} />
                     </button>
                   </div>
 

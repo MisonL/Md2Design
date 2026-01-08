@@ -1,11 +1,12 @@
 import { motion, AnimatePresence, useMotionValue, useAnimation } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun, StretchHorizontal, MousePointer2, Crop } from 'lucide-react';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun, StretchHorizontal, MousePointer2, Crop, CornerDownLeft } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-import { useState, useEffect } from 'react';
+import rehypeRaw from 'rehype-raw';
+import { useState, useEffect, useRef } from 'react';
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -20,6 +21,29 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
 
   // Update data
   const updates = [
+    {
+      version: 'v1.8.5',
+      date: '2026-01-08',
+      title: {
+        en: 'Flexible Spacing with Blank Lines',
+        zh: '灵活的空行间距控制'
+      },
+      changes: {
+        en: [
+          '1. Added "Insert Blank Line" button to the toolbar for easier vertical spacing control.',
+          '2. Fixed deployment issue related to unused variables.',
+          '3. Enhanced interactive demo in changelog.',
+          'Special thanks to anonymous user feedback.',
+        ],
+        zh: [
+          '1. 新增工具栏“插入空行”按钮，轻松实现多行连空效果；',
+          '2. 修复了由于未使用的变量导致的部署报错问题；',
+          '3. 优化了更新日志的可交互功能演示。',
+          '本次更新感谢匿名用户的反馈。',
+        ]
+      },
+      demo: 'v185-features'
+    },
     {
       version: 'v1.8.4',
       date: '2026-01-08',
@@ -604,6 +628,12 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                             </h3>
                          </div>
 
+                         {currentUpdate.demo === 'v185-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoBlankLine />
+                           </div>
+                         )}
+
                          {currentUpdate.demo === 'v184-features' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
                               <DemoAlignmentAndList />
@@ -719,7 +749,84 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   );
 };
 
- const DemoAlignmentAndList = () => {
+const DemoBlankLine = () => {
+  const { language } = useStore();
+  const [text, setText] = useState(language === 'zh' ? '第一行文本\n第二行文本' : 'First line\nSecond line');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const addBlankLine = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    const insert = '\n<br/>\n';
+    const newText = text.substring(0, start) + insert + text.substring(end);
+
+    setText(newText);
+    
+    // Use setTimeout to refocus and set cursor after React render
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + insert.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '空行间距演示' : 'Blank Line Spacing Demo'}
+      </div>
+
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/5">
+          <div className="text-sm font-bold text-slate-500">Editor</div>
+          <button
+            onMouseDown={(e) => { e.preventDefault(); addBlankLine(); }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+          >
+            <CornerDownLeft size={14} />
+            {language === 'zh' ? '插入空行' : 'Insert Blank Line'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 h-48">
+          <div className="flex flex-col gap-2">
+            <div className="text-[10px] font-bold text-slate-400 uppercase">Markdown</div>
+            <textarea 
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="flex-1 bg-slate-50 dark:bg-white/5 rounded-xl p-3 text-xs font-mono resize-none focus:outline-none border border-black/5 dark:border-white/5"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="text-[10px] font-bold text-slate-400 uppercase">Preview</div>
+            <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-xl p-3 text-xs overflow-y-auto custom-scrollbar border border-black/5 dark:border-white/5">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm, remarkBreaks]} 
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />
+                }}
+              >
+                {text}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-[10px] text-slate-400 text-center italic">
+          {language === 'zh' ? '点击“插入空行”按钮观察预览区的垂直间距变化' : 'Click "Insert Blank Line" to see vertical spacing changes'}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoAlignmentAndList = () => {
   const { language } = useStore();
   const [align, setAlign] = useState<'left' | 'center' | 'right'>('center');
   const [listType, setListType] = useState<'none' | 'bullet' | 'ordered'>('none');
