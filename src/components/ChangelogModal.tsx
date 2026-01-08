@@ -22,6 +22,27 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   // Update data
   const updates = [
     {
+      version: 'v1.9.0',
+      date: '2026-01-08',
+      title: {
+        en: 'Flexible Layout Mode',
+        zh: '新增“灵活”布局模式'
+      },
+      changes: {
+        en: [
+          '1. Added "Flexible" layout mode: Cards now automatically adjust their height based on content.',
+          '2. Smart Pagination: Use "---" to split content into multiple cards with independent heights.',
+          'Special thanks to anonymous user feedback.',
+        ],
+        zh: [
+          '1. 新增“灵活”布局模式：卡片高度现在会根据内容自动收缩，告别固定比例限制；',
+          '2. 智能分页支持：在灵活模式下使用 "---" 分隔符，可将长文拆分为多张高度自适应的独立卡片；',
+          '本次更新感谢匿名用户的反馈。',
+        ]
+      },
+      demo: 'v190-features'
+    },
+    {
       version: 'v1.8.5',
       date: '2026-01-08',
       title: {
@@ -628,6 +649,12 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                             </h3>
                          </div>
 
+                         {currentUpdate.demo === 'v190-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoFlexibleLayout />
+                           </div>
+                         )}
+
                          {currentUpdate.demo === 'v185-features' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
                               <DemoBlankLine />
@@ -746,6 +773,104 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+};
+
+const DemoFlexibleLayout = () => {
+  const { language } = useStore();
+  const [mode, setMode] = useState<'fixed' | 'flexible'>('flexible');
+  const [content, setContent] = useState(language === 'zh' ? '第一张卡片内容\n---\n第二张较长的卡片内容，展示灵活高度如何自适应不同长度的文本。' : 'First card content\n---\nSecond longer card content, demonstrating how flexible height adapts to different text lengths.');
+
+  const pages = content.split(/\n---\n/).filter(p => p.trim() !== '');
+  
+  return (
+    <div className="w-full max-w-md space-y-8">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center">
+        {language === 'zh' ? '灵活布局与智能分页演示' : 'Flexible Layout & Smart Pagination'}
+      </div>
+
+      <div className="flex flex-col gap-8 items-center">
+        {/* Layout Toggle */}
+        <div className="flex bg-white dark:bg-white/5 p-1 rounded-2xl border border-black/5 dark:border-white/10 shadow-sm">
+          <button 
+            onClick={() => setMode('fixed')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${mode === 'fixed' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400'}`}
+          >
+            {language === 'zh' ? '固定比例' : 'Fixed Ratio'}
+          </button>
+          <button 
+            onClick={() => setMode('flexible')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${mode === 'flexible' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400'}`}
+          >
+            {language === 'zh' ? '灵活模式' : 'Flexible Mode'}
+          </button>
+        </div>
+
+        {/* Multi-Card Preview Area */}
+        <div className="w-full flex flex-col items-center gap-4 min-h-[300px] p-4 bg-slate-50 dark:bg-white/5 rounded-3xl border border-black/5 dark:border-white/5 overflow-hidden">
+          <AnimatePresence mode="popLayout">
+            {pages.map((page, index) => (
+              <motion.div 
+                key={index}
+                layout
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="w-48 bg-white dark:bg-[#151515] rounded-xl border border-black/10 dark:border-white/10 shadow-xl overflow-hidden flex flex-col shrink-0"
+                style={{ 
+                  height: mode === 'fixed' ? '200px' : 'auto',
+                  minHeight: mode === 'flexible' ? '60px' : '200px'
+                }}
+              >
+                <div className="p-3 flex-1">
+                  <div className="w-6 h-1 bg-blue-500 rounded-full mb-2" />
+                  <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {page}
+                  </p>
+                </div>
+                <div className="p-1.5 border-t border-black/5 dark:border-white/5 flex justify-center">
+                  <div className="text-[8px] font-bold text-slate-300">PAGE {index + 1}</div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          
+          {mode === 'fixed' && pages.length > 1 && (
+             <div className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full animate-pulse">
+               {language === 'zh' ? '固定比例模式下存在大量留白' : 'Large gaps in Fixed Ratio mode'}
+             </div>
+          )}
+        </div>
+
+        {/* Editor Mock */}
+        <div className="w-full space-y-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Editor Content</span>
+              <button 
+                onClick={() => setContent(content + '\n---\n' + (language === 'zh' ? '新分页内容' : 'New Page Content'))}
+                className="text-[10px] font-bold text-blue-500 hover:text-blue-600 flex items-center gap-1"
+              >
+                <Plus size={10} />
+                {language === 'zh' ? '添加分页' : 'Add Page'}
+              </button>
+            </div>
+            <textarea 
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full h-24 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+              placeholder={language === 'zh' ? '输入 --- 进行分页...' : 'Use --- to split pages...'}
+            />
+          </div>
+          <p className="text-[10px] text-slate-400 text-center leading-relaxed italic px-4">
+            {language === 'zh' 
+              ? '在“灵活”模式下，不仅高度自适应内容，还能通过 "---" 实现多卡片独立排版。' 
+              : 'In "Flexible" mode, height adapts to content and "---" enables multi-card layouts.'}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

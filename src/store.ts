@@ -37,6 +37,7 @@ export type CardStyle = {
   aspectRatio: '1:1' | '4:3' | '3:2' | '16:9' | 'custom';
   orientation: 'portrait' | 'landscape';
   autoHeight: boolean;
+  layoutMode: 'portrait' | 'landscape' | 'long' | 'flexible';
   width: number;
   height: number;
   borderRadius: number;
@@ -247,6 +248,7 @@ const INITIAL_CARD_STYLE: CardStyle = {
   aspectRatio: '4:3',
   orientation: 'portrait',
   autoHeight: false,
+  layoutMode: 'portrait',
   width: 800,
   height: 600,
   borderRadius: 24,
@@ -549,9 +551,33 @@ export const useStore = create<AppState>()(
     {
       name: 'md2card-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      version: 6,
       migrate: (persistedState: any, version: number) => {
         if (!persistedState) return persistedState;
+
+        // Ensure layoutMode exists if cardStyle exists (robustness check)
+        if (persistedState.cardStyle && !persistedState.cardStyle.layoutMode) {
+          let layoutMode: 'portrait' | 'landscape' | 'long' | 'flexible' = 'portrait';
+          if (persistedState.cardStyle.autoHeight) {
+            layoutMode = 'long';
+          } else if (persistedState.cardStyle.orientation === 'landscape') {
+            layoutMode = 'landscape';
+          }
+          persistedState.cardStyle.layoutMode = layoutMode;
+        }
+
+        if (version <= 5) {
+          // Migration for v5 to v6: Add layoutMode
+          if (persistedState.cardStyle) {
+            let layoutMode: 'portrait' | 'landscape' | 'long' | 'flexible' = 'portrait';
+            if (persistedState.cardStyle.autoHeight) {
+              layoutMode = 'long';
+            } else if (persistedState.cardStyle.orientation === 'landscape') {
+              layoutMode = 'landscape';
+            }
+            persistedState.cardStyle.layoutMode = layoutMode;
+          }
+        }
 
         if (version <= 4) {
           // Migration for v4 to v5: Add resizeMode to cardImages

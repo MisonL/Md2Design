@@ -59,7 +59,7 @@ const Card = memo(({
   const outerStyle = {
     width: `${width}px`,
     height: cardStyle.autoHeight ? 'auto' : `${height}px`,
-    minHeight: cardStyle.autoHeight ? `${height}px` : undefined,
+    minHeight: cardStyle.layoutMode === 'flexible' ? '100px' : (cardStyle.autoHeight ? `${height}px` : undefined),
     padding: cardStyle.enableBackground ? `${cardStyle.padding}px` : '0',
     background: 'transparent', // Handled by separate layer
   };
@@ -416,6 +416,12 @@ const Card = memo(({
             <div className="relative z-10 h-full flex flex-col pointer-events-none">
               <div 
                 className="prose prose-sm max-w-none flex-1 pointer-events-auto overflow-hidden break-words [&>*:first-child]:mt-0 prose-hr:hidden prose-blockquote:before:content-none prose-blockquote:after:content-none prose-blockquote:border-none [&_*]:border-none !prose-quotes-none"
+                onMouseDown={(e) => {
+                  // If clicking on prose text area, deselect image
+                  if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'P' || (e.target as HTMLElement).tagName === 'DIV') {
+                    setSelectedImageId(null);
+                  }
+                }}
                 style={{ 
                 padding: 0,
                 maxHeight: cardStyle.autoHeight ? 'none' : '100%',
@@ -704,7 +710,7 @@ export const Preview = () => {
     return () => el?.removeEventListener('scroll', handleScroll);
   }, [setIsScrolled, setActiveCardIndex]);
   
-  const pages = cardStyle.autoHeight 
+  const pages = cardStyle.layoutMode === 'long'
     ? [markdown] 
     : markdown.split(/\n\s*---\s*\n|^\s*---\s*$/m).filter(page => page.trim() !== '');
 
@@ -717,6 +723,12 @@ export const Preview = () => {
       ref={scrollRef}
       className="w-full h-full overflow-y-auto pt-24 flex flex-col items-center gap-12 custom-scrollbar pb-32 transition-all duration-300"
       style={{ paddingLeft, paddingRight }}
+      onMouseDown={(e) => {
+        // If clicking on the main scroll container (empty space), deselect image
+        if (e.target === e.currentTarget) {
+          setSelectedImageId(null);
+        }
+      }}
     >
       {pages.map((pageContent, index) => (
         <Card 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useStore, type CardStyle } from '../store';
 import { useTranslation } from '../i18n';
-import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw, Stamp, Upload, Square, Frame } from 'lucide-react';
+import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw, Stamp, Upload, Square, Frame, StretchHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PresetsManager } from './sidebar/PresetsManager';
 import { SidebarSection, AdvancedToggle } from './sidebar/SidebarSection';
@@ -185,32 +185,51 @@ export const Sidebar = () => {
 
               {/* Layout */}
               <SidebarSection title={t.layout} icon={<Layout size={16} />} defaultOpen={true}>
-                {/* Orientation */}
+                {/* Orientation & Layout Mode */}
                 <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/10 dark:border-white/10">
-                  {['portrait', 'landscape', 'autoHeight'].map((o) => (
+                  {['portrait', 'landscape', 'long', 'flexible'].map((m) => (
                     <button
-                      key={o}
+                      key={m}
                       onClick={() => {
-                          if (o === 'autoHeight') {
-                              updateCardStyle({ autoHeight: true });
-                          } else {
-                              updateCardStyle({ orientation: o as any, autoHeight: false });
-                          }
+                        const mode = m as 'portrait' | 'landscape' | 'long' | 'flexible';
+                        const updates: Partial<CardStyle> = { layoutMode: mode };
+                        
+                        if (mode === 'portrait') {
+                          updates.orientation = 'portrait';
+                          updates.autoHeight = false;
+                        } else if (mode === 'landscape') {
+                          updates.orientation = 'landscape';
+                          updates.autoHeight = false;
+                        } else if (mode === 'long') {
+                          updates.autoHeight = true;
+                        } else if (mode === 'flexible') {
+                          updates.autoHeight = true; // Still uses auto height logic for cards
+                        }
+                        
+                        updateCardStyle(updates);
                       }}
                       className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        (o === 'autoHeight' ? cardStyle.autoHeight : (!cardStyle.autoHeight && cardStyle.orientation === o))
+                        cardStyle.layoutMode === m
                           ? 'bg-white text-black shadow-sm'
                           : 'text-inherit hover:bg-black/5 dark:hover:bg-white/5 opacity-60 hover:opacity-100'
                       }`}
+                      title={m === 'long' ? t.autoHeightHint : m === 'flexible' ? t.flexibleHint : undefined}
                     >
-                      {o === 'portrait' ? <Smartphone size={14} /> : o === 'landscape' ? <MonitorIcon size={14} /> : <Layout size={14} />}
-                      <span className="capitalize">{o === 'autoHeight' ? t.autoHeight : (t as any)[o]}</span>
+                      {m === 'portrait' ? <Smartphone size={14} /> : 
+                       m === 'landscape' ? <MonitorIcon size={14} /> : 
+                       m === 'long' ? <Layout size={14} /> :
+                       <StretchHorizontal size={14} />}
+                      <span className="capitalize">
+                        {m === 'long' ? t.autoHeight : 
+                         m === 'flexible' ? t.flexible : 
+                         (t as any)[m]}
+                      </span>
                     </button>
                   ))}
                 </div>
 
                 {/* Aspect Ratio & Custom Dimensions */}
-                {!cardStyle.autoHeight ? (
+                {cardStyle.layoutMode === 'portrait' || cardStyle.layoutMode === 'landscape' ? (
                   <>
                     <div className="grid grid-cols-5 gap-2">
                       {ASPECT_RATIOS.map((ratio) => {
