@@ -211,7 +211,6 @@ export const Editor = () => {
     const match = blockContent.match(regex);
 
     if (match) {
-      const currentTag = match[1];
       const currentAlign = match[2];
       const content = match[3];
       
