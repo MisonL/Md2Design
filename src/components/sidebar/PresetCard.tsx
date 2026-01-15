@@ -218,21 +218,21 @@ export const PresetCard = ({
 
           <div
             className="flex-shrink-0 w-full pt-2 flex items-center relative font-mono uppercase tracking-widest pointer-events-none text-[10px] h-8"
-            style={{ opacity: style.watermark.opacity ?? 0.6 }}
+            style={{ opacity: style.watermark?.opacity ?? 0.6 }}
           >
             <div className="absolute left-0 flex items-center gap-4">
-              {style.pageNumber.enabled && style.pageNumber.position === 'left' && <span className="font-bold">{index + 1}</span>}
-              {style.watermark.enabled && style.watermark.position === 'left' && <span>{style.watermark.content}</span>}
+              {style.pageNumber?.enabled && style.pageNumber?.position === 'left' && <span className="font-bold">{index + 1}</span>}
+              {style.watermark?.enabled && style.watermark?.position === 'left' && <span>{style.watermark?.content}</span>}
             </div>
 
             <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
-              {style.pageNumber.enabled && style.pageNumber.position === 'center' && <span className="font-bold">{index + 1}</span>}
-              {style.watermark.enabled && style.watermark.position === 'center' && <span>{style.watermark.content}</span>}
+              {style.pageNumber?.enabled && style.pageNumber?.position === 'center' && <span className="font-bold">{index + 1}</span>}
+              {style.watermark?.enabled && style.watermark?.position === 'center' && <span>{style.watermark?.content}</span>}
             </div>
 
             <div className="absolute right-0 flex items-center gap-4">
-              {style.watermark.enabled && style.watermark.position === 'right' && <span>{style.watermark.content}</span>}
-              {style.pageNumber.enabled && style.pageNumber.position === 'right' && <span className="font-bold">{index + 1}</span>}
+              {style.watermark?.enabled && style.watermark?.position === 'right' && <span>{style.watermark?.content}</span>}
+              {style.pageNumber?.enabled && style.pageNumber?.position === 'right' && <span className="font-bold">{index + 1}</span>}
             </div>
           </div>
         </div>

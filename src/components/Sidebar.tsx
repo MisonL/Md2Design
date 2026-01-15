@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useStore, type CardStyle } from '../store';
 import { useTranslation } from '../i18n';
-import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw, Stamp, Upload, Square, Frame } from 'lucide-react';
+import { Palette, Type, Layout, Monitor, ChevronRight, ChevronLeft, Smartphone, Monitor as MonitorIcon, Plus, Image as ImageIcon, RotateCcw, Stamp, Upload, Square, Frame, StretchHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PresetsManager } from './sidebar/PresetsManager';
 import { SidebarSection, AdvancedToggle } from './sidebar/SidebarSection';
@@ -180,32 +180,51 @@ export const Sidebar = () => {
 
               {/* Layout */}
               <SidebarSection title={t.layout} icon={<Layout size={16} />} defaultOpen={true}>
-                {/* Orientation */}
+                {/* Orientation & Layout Mode */}
                 <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-lg border border-black/10 dark:border-white/10">
-                  {['portrait', 'landscape', 'autoHeight'].map((o) => (
+                  {['portrait', 'landscape', 'long', 'flexible'].map((m) => (
                     <button
-                      key={o}
+                      key={m}
                       onClick={() => {
-                          if (o === 'autoHeight') {
-                              updateCardStyle({ autoHeight: true });
-                          } else {
-                              updateCardStyle({ orientation: o as 'portrait' | 'landscape', autoHeight: false });
-                          }
+                        const mode = m as 'portrait' | 'landscape' | 'long' | 'flexible';
+                        const updates: Partial<CardStyle> = { layoutMode: mode };
+                        
+                        if (mode === 'portrait') {
+                          updates.orientation = 'portrait';
+                          updates.autoHeight = false;
+                        } else if (mode === 'landscape') {
+                          updates.orientation = 'landscape';
+                          updates.autoHeight = false;
+                        } else if (mode === 'long') {
+                          updates.autoHeight = true;
+                        } else if (mode === 'flexible') {
+                          updates.autoHeight = true; // Still uses auto height logic for cards
+                        }
+                        
+                        updateCardStyle(updates);
                       }}
                       className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        (o === 'autoHeight' ? cardStyle.autoHeight : (!cardStyle.autoHeight && cardStyle.orientation === o))
+                        cardStyle.layoutMode === m
                           ? 'bg-white text-black shadow-sm'
                           : 'text-inherit hover:bg-black/5 dark:hover:bg-white/5 opacity-60 hover:opacity-100'
                       }`}
+                      title={m === 'long' ? t.autoHeightHint : m === 'flexible' ? t.flexibleHint : undefined}
                     >
-                      {o === 'portrait' ? <Smartphone size={14} /> : o === 'landscape' ? <MonitorIcon size={14} /> : <Layout size={14} />}
-                      <span className="capitalize">{o === 'autoHeight' ? t.autoHeight : (o === 'portrait' ? t.portrait : t.landscape)}</span>
+                      {m === 'portrait' ? <Smartphone size={14} /> : 
+                       m === 'landscape' ? <MonitorIcon size={14} /> : 
+                       m === 'long' ? <Layout size={14} /> :
+                       <StretchHorizontal size={14} />}
+                      <span className="capitalize">
+                        {m === 'long' ? t.autoHeight : 
+                         m === 'flexible' ? t.flexible : 
+                         (t as any)[m]}
+                      </span>
                     </button>
                   ))}
                 </div>
 
                 {/* Aspect Ratio & Custom Dimensions */}
-                {!cardStyle.autoHeight ? (
+                {cardStyle.layoutMode === 'portrait' || cardStyle.layoutMode === 'landscape' ? (
                   <>
                     <div className="grid grid-cols-5 gap-2">
                       {ASPECT_RATIOS.map((ratio) => {
@@ -681,6 +700,21 @@ export const Sidebar = () => {
                   <ColorSectionWrapper>
                     <div className="grid grid-cols-2 gap-3">
                       <ColorPicker 
+                        label={t.underlineColor}
+                        color={cardStyle.underlineColor || '#3b82f6'}
+                        onChange={(val) => handleColorChange('underlineColor', val)}
+                      />
+                      <ColorPicker 
+                        label={t.strikethroughColor}
+                        color={cardStyle.strikethroughColor || '#000000'}
+                        onChange={(val) => handleColorChange('strikethroughColor', val)}
+                      />
+                    </div>
+                  </ColorSectionWrapper>
+
+                  <ColorSectionWrapper>
+                    <div className="grid grid-cols-2 gap-3">
+                      <ColorPicker 
                         label={t.blockquoteBackground}
                         color={cardStyle.blockquoteBackgroundColor.substring(0, 7)}
                         onChange={(val) => handleColorChange('blockquoteBackgroundColor', val + '20')}
@@ -762,7 +796,7 @@ export const Sidebar = () => {
                 <div className="mb-4">
                   <label className="text-xs font-medium mb-2 block opacity-70">{t.presetFonts}</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {['Inter', 'serif', 'monospace', 'Arial'].map((font) => (
+                    {['GoogleSans-Regular', 'serif', 'monospace', 'Arial'].map((font) => (
                       <button
                         key={font}
                         onClick={() => updateCardStyle({ fontFamily: font })}
@@ -918,21 +952,21 @@ export const Sidebar = () => {
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-medium opacity-70">{t.watermark}</label>
                       <button 
-                        onClick={() => updateCardStyle({ watermark: { ...cardStyle.watermark, enabled: !cardStyle.watermark.enabled } })}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.watermark.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
+                        onClick={() => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), enabled: !cardStyle.watermark?.enabled } } as any)}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.watermark?.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
                       >
-                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.watermark.enabled ? 'left-6' : 'left-1'}`} />
+                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.watermark?.enabled ? 'left-6' : 'left-1'}`} />
                       </button>
                     </div>
                     
-                    {cardStyle.watermark.enabled && (
+                    {cardStyle.watermark?.enabled && (
                       <div className="p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 space-y-3">
                         <div>
                           <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.content}</label>
                           <input 
                             type="text" 
-                            value={cardStyle.watermark.content}
-                            onChange={(e) => updateCardStyle({ watermark: { ...cardStyle.watermark, content: e.target.value } })}
+                            value={cardStyle.watermark?.content}
+                            onChange={(e) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), content: e.target.value } } as any)}
                             className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded p-2 text-xs focus:border-black/30 dark:focus:border-white/30 focus:outline-none text-slate-900 dark:text-white"
                           />
                         </div>
@@ -944,8 +978,8 @@ export const Sidebar = () => {
                                {['left', 'center', 'right'].map((pos) => (
                                  <button
                                    key={pos}
-                                   onClick={() => updateCardStyle({ watermark: { ...cardStyle.watermark, position: pos as 'left' | 'center' | 'right' } })}
-                                   className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.watermark.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
+                                   onClick={() => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), position: pos as any } } as any)}
+                                   className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.watermark?.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                                  >
                                    {t[pos as keyof typeof t]}
                                  </button>
@@ -956,18 +990,28 @@ export const Sidebar = () => {
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.opacity}</label>
-                              <DraggableNumberInput value={cardStyle.watermark.opacity} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, opacity: val } })} icon={<ParameterIcon type="opacity" />} />
+                              <DraggableNumberInput value={cardStyle.watermark?.opacity || 0.5} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), opacity: val } } as any)} icon={<ParameterIcon type="opacity" />} />
                             </div>
                             <div>
                               <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.fontSize}</label>
-                              <DraggableNumberInput value={cardStyle.watermark.fontSize} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, fontSize: val } })} icon={<ParameterIcon type="fontSize" />} />
+                              <DraggableNumberInput value={cardStyle.watermark?.fontSize || 12} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), fontSize: val } } as any)} icon={<ParameterIcon type="fontSize" />} />
                             </div>
                           </div>
                           <ColorPicker 
                             label={t.text}
-                            color={cardStyle.watermark.color || cardStyle.textColor} 
-                            onChange={(val) => updateCardStyle({ watermark: { ...cardStyle.watermark, color: val } })} 
+                            color={cardStyle.watermark?.color || cardStyle.textColor} 
+                            onChange={(val) => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), color: val } } as any)} 
                           />
+
+                          <div className="flex items-center justify-between mt-2 pt-2 border-t border-black/5 dark:border-white/5">
+                            <label className="text-[10px] uppercase tracking-wider opacity-60">{t.uppercase}</label>
+                            <button 
+                              onClick={() => updateCardStyle({ watermark: { ...(cardStyle.watermark || {}), uppercase: !cardStyle.watermark?.uppercase } } as any)}
+                              className={`w-8 h-4 rounded-full transition-colors relative ${cardStyle.watermark?.uppercase ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
+                            >
+                              <div className={`w-2.5 h-2.5 rounded-full bg-white dark:bg-black/80 absolute top-0.75 transition-all ${cardStyle.watermark?.uppercase ? 'left-4.5' : 'left-1'}`} />
+                            </button>
+                          </div>
                         </AdvancedToggle>
                       </div>
                     )}
@@ -978,14 +1022,14 @@ export const Sidebar = () => {
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-medium opacity-70">{t.pageNumber}</label>
                       <button 
-                        onClick={() => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, enabled: !cardStyle.pageNumber.enabled } })}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.pageNumber.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
+                        onClick={() => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), enabled: !cardStyle.pageNumber?.enabled } } as any)}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${cardStyle.pageNumber?.enabled ? 'bg-slate-900 dark:bg-white/90' : 'bg-black/10 dark:bg-white/10'}`}
                       >
-                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.pageNumber.enabled ? 'left-6' : 'left-1'}`} />
+                        <div className={`w-3 h-3 rounded-full bg-white dark:bg-black/80 absolute top-1 transition-all ${cardStyle.pageNumber?.enabled ? 'left-6' : 'left-1'}`} />
                       </button>
                     </div>
                     
-                    {cardStyle.pageNumber.enabled && (
+                    {cardStyle.pageNumber?.enabled && (
                       <div className="p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 space-y-3">
                         <AdvancedToggle label={t.advancedSettings}>
                             <div>
@@ -994,8 +1038,8 @@ export const Sidebar = () => {
                                  {['left', 'center', 'right'].map((pos) => (
                                    <button
                                      key={pos}
-                                     onClick={() => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, position: pos as 'left' | 'center' | 'right' } })}
-                                     className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.pageNumber.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
+                                     onClick={() => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), position: pos as any } } as any)}
+                                     className={`flex-1 py-1 text-[10px] rounded transition-all capitalize ${cardStyle.pageNumber?.position === pos ? 'bg-black/10 dark:bg-white/20 text-slate-900 dark:text-white' : 'text-black/50 dark:text-white/50'}`}
                                    >
                                      {t[pos as keyof typeof t]}
                                    </button>
@@ -1006,17 +1050,17 @@ export const Sidebar = () => {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.opacity}</label>
-                                <DraggableNumberInput value={cardStyle.pageNumber.opacity} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, opacity: val } })} icon={<ParameterIcon type="opacity" />} />
+                                <DraggableNumberInput value={cardStyle.pageNumber?.opacity || 0.5} min={0} max={1} step={0.05} onChange={(val) => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), opacity: val } } as any)} icon={<ParameterIcon type="opacity" />} />
                               </div>
                               <div>
                                 <label className="text-[10px] uppercase tracking-wider opacity-60 mb-1 block">{t.fontSize}</label>
-                                <DraggableNumberInput value={cardStyle.pageNumber.fontSize} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, fontSize: val } })} icon={<ParameterIcon type="fontSize" />} />
+                                <DraggableNumberInput value={cardStyle.pageNumber?.fontSize || 12} min={6} max={64} step={1} onChange={(val) => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), fontSize: val } } as any)} icon={<ParameterIcon type="fontSize" />} />
                               </div>
                             </div>
                             <ColorPicker 
                               label={t.text}
-                              color={cardStyle.pageNumber.color || cardStyle.textColor} 
-                              onChange={(val) => updateCardStyle({ pageNumber: { ...cardStyle.pageNumber, color: val } })} 
+                              color={cardStyle.pageNumber?.color || cardStyle.textColor} 
+                              onChange={(val) => updateCardStyle({ pageNumber: { ...(cardStyle.pageNumber || {}), color: val } } as any)} 
                             />
                         </AdvancedToggle>
                       </div>

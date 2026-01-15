@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
 import { useTranslation } from '../i18n';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, Quote, Heading1, Heading2, Link, Image as ImageIcon, Check, Strikethrough } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, Bold, Italic, List, ListOrdered, Quote, Heading1, Heading2, Heading3, Heading4, Link, Image as ImageIcon, Check, Strikethrough, AlignLeft, AlignCenter, AlignRight, CornerDownLeft, Underline } from 'lucide-react';
 import { htmlToMarkdown } from '../utils/turndown';
 import { paginateMarkdown } from '../utils/pagination';
 
@@ -10,6 +10,8 @@ export const Editor = () => {
   const { markdown, setMarkdown, addCardImage, cardStyle, isEditorOpen, setIsEditorOpen } = useStore();
   const t = useTranslation();
   const [showPaginationToast, setShowPaginationToast] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<'heading' | 'align' | 'list' | null>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const prevAutoHeightRef = useRef(cardStyle.autoHeight);
@@ -49,15 +51,80 @@ export const Editor = () => {
     }, 0);
   };
 
+  const insertBlankLine = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    // Check if we are at the beginning of a line or if there's text before
+    const textBefore = markdown.substring(0, start);
+    const needsNewLineBefore = textBefore.length > 0 && !textBefore.endsWith('\n');
+    
+    const insert = (needsNewLineBefore ? '\n' : '') + '<br/>\n';
+    const newText = markdown.substring(0, start) + insert + markdown.substring(end);
+
+    setMarkdown(newText);
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + insert.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
   const toggleInlineStyle = (marker: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const selected = markdown.substring(start, end);
-    const escaped = marker.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp(`^${escaped}(.*)${escaped}$`);
     
+    // Support for <u> tags
+    if (marker === '<u>') {
+      const regex = /^<u>(.*)<\/u>$/s;
+      if (regex.test(selected)) {
+        const clean = selected.replace(regex, '$1');
+        const newText = markdown.substring(0, start) + clean + markdown.substring(end);
+        setMarkdown(newText);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start, start + clean.length);
+        }, 0);
+        return;
+      }
+      
+      const before = markdown.substring(start - 3, start);
+      const after = markdown.substring(end, end + 4);
+      if (before === '<u>' && after === '</u>') {
+        const newText = markdown.substring(0, start - 3) + selected + markdown.substring(end + 4);
+        setMarkdown(newText);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start - 3, end - 3);
+        }, 0);
+      } else {
+        const wrapped = `<u>${selected}</u>`;
+        const newText = markdown.substring(0, start) + wrapped + markdown.substring(end);
+        setMarkdown(newText);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start + 3, end + 3);
+        }, 0);
+      }
+      return;
+    }
+
+    const escapedMarker = marker.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    let regex;
+    if (marker === '**') {
+      regex = new RegExp(`^\\*\\*(.*)\\*\\*$`, 's');
+    } else if (marker === '*') {
+      regex = new RegExp(`^\\*(?!\\*)(.*)(?<!\\*)\\*$`, 's');
+    } else {
+      regex = new RegExp(`^${escapedMarker}(.*)${escapedMarker}$`, 's');
+    }
+    
+    // 1. Check if selection itself is wrapped
     if (regex.test(selected)) {
         const clean = selected.replace(regex, '$1');
         const newText = markdown.substring(0, start) + clean + markdown.substring(end);
@@ -65,6 +132,31 @@ export const Editor = () => {
         setTimeout(() => {
             textarea.focus();
             textarea.setSelectionRange(start, start + clean.length);
+        }, 0);
+        return;
+    }
+
+    // 2. Check if text around selection is wrapped
+    const before = markdown.substring(start - marker.length, start);
+    const after = markdown.substring(end, end + marker.length);
+    
+    // Special handling for * vs **
+    let isWrapped = before === marker && after === marker;
+    if (isWrapped && marker === '*') {
+      // If marker is *, ensure it's not actually part of **
+      const beforeBefore = markdown.substring(start - marker.length - 1, start - marker.length);
+      const afterAfter = markdown.substring(end + marker.length, end + marker.length + 1);
+      if (beforeBefore === '*' || afterAfter === '*') {
+        isWrapped = false;
+      }
+    }
+
+    if (isWrapped) {
+        const newText = markdown.substring(0, start - marker.length) + selected + markdown.substring(end + marker.length);
+        setMarkdown(newText);
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start - marker.length, end - marker.length);
         }, 0);
     } else {
         const newText = markdown.substring(0, start) + marker + selected + marker + markdown.substring(end);
@@ -77,40 +169,75 @@ export const Editor = () => {
   };
 
   const toggleBlockStyle = (marker: string) => {
+    setActiveMenu(null);
     const textarea = textareaRef.current;
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     
-    // Find line start/end
-    const lineStart = markdown.lastIndexOf('\n', start - 1) + 1;
+    let lineStart = markdown.lastIndexOf('\n', start - 1) + 1;
     let lineEnd = markdown.indexOf('\n', end);
     if (lineEnd === -1) lineEnd = markdown.length;
     
     const blockContent = markdown.substring(lineStart, lineEnd);
     const lines = blockContent.split('\n');
-    const markerWithSpace = marker + ' ';
     
-    // Determine if we should add or remove
-    // If all lines already start with the marker, we remove it
-    // Otherwise, we add it to lines that don't have it
-    const allHaveMarker = lines.every(line => line.trim() === '' || line.startsWith(markerWithSpace));
+    // Determine if it's a heading
+    const isHeading = marker.startsWith('#');
+    // Determine if it's an ordered list (matches "1. ")
+    const isOrderedList = marker === '1.';
+    const markerWithSpace = isOrderedList ? '' : (isHeading ? marker + ' ' : marker + ' ');
     
     let newLines: string[];
- 
-    if (allHaveMarker) {
-      // Remove marker from all lines that have it
-      newLines = lines.map((line) => {
-        if (line.startsWith(markerWithSpace)) {
-          return line.substring(markerWithSpace.length);
+
+    if (isHeading) {
+      // For headings, we want to replace any existing heading level or toggle it off
+      newLines = lines.map(line => {
+        const headingMatch = line.match(/^(#+)\s/);
+        if (headingMatch) {
+          const existingMarker = headingMatch[1];
+          const content = line.substring(existingMarker.length).trim();
+          if (existingMarker === marker) {
+            // Toggle off if same level
+            return content;
+          } else {
+            // Switch to new level
+            return marker + ' ' + content;
+          }
         }
-        return line;
+        // Add heading if none exists
+        return marker + ' ' + line;
       });
     } else {
-      // Add marker to all lines
-      newLines = lines.map((line) => {
-        return markerWithSpace + line;
+      // Check if all lines already have the marker for lists/quotes
+      const allHaveMarker = lines.every(line => {
+        if (line.trim() === '') return true;
+        if (isOrderedList) {
+          return /^\d+\.\s/.test(line);
+        }
+        return line.startsWith(markerWithSpace);
       });
+
+      if (allHaveMarker) {
+        // Remove marker
+        newLines = lines.map((line) => {
+          if (isOrderedList) {
+            return line.replace(/^\d+\.\s/, '');
+          }
+          if (line.startsWith(markerWithSpace)) {
+            return line.substring(markerWithSpace.length);
+          }
+          return line;
+        });
+      } else {
+        // Add marker
+        newLines = lines.map((line, idx) => {
+          if (isOrderedList) {
+            return `${idx + 1}. ${line}`;
+          }
+          return markerWithSpace + line;
+        });
+      }
     }
 
     const newBlockContent = newLines.join('\n');
@@ -118,72 +245,88 @@ export const Editor = () => {
     
     setMarkdown(newText);
     
-    // Calculate new selection
     setTimeout(() => {
       textarea.focus();
-      
-      // Re-calculate start and end based on how many markers were added/removed before them
-      let newStart = start;
-      let newEnd = end;
-      
-      if (allHaveMarker) {
-        // Removing
-        lines.forEach((line, idx) => {
-          const lineAbsoluteStart = lineStart + lines.slice(0, idx).join('\n').length + (idx > 0 ? 1 : 0);
-          if (lineAbsoluteStart < start && line.startsWith(markerWithSpace)) {
-            newStart -= markerWithSpace.length;
-          }
-          if (lineAbsoluteStart < end && line.startsWith(markerWithSpace)) {
-            newEnd -= markerWithSpace.length;
-          }
-        });
-      } else {
-        // Adding
-        lines.forEach((_, idx) => {
-          const lineAbsoluteStart = lineStart + lines.slice(0, idx).join('\n').length + (idx > 0 ? 1 : 0);
-          if (lineAbsoluteStart <= start) {
-            newStart += markerWithSpace.length;
-          }
-          if (lineAbsoluteStart <= end) {
-            newEnd += markerWithSpace.length;
-          }
-        });
-      }
-      
-      textarea.setSelectionRange(newStart, newEnd);
+      textarea.setSelectionRange(lineStart, lineStart + newBlockContent.length);
     }, 0);
+
+  };
+
+  const toggleAlignment = (align: 'left' | 'center' | 'right') => {
+    setActiveMenu(null);
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    // Find the full block (lines)
+    let lineStart = markdown.lastIndexOf('\n', start - 1) + 1;
+    let lineEnd = markdown.indexOf('\n', end);
+    if (lineEnd === -1) lineEnd = markdown.length;
+    
+    const blockContent = markdown.substring(lineStart, lineEnd);
+    
+    // Precise regex to match alignment tags and capture their content
+    // This matches <tag style="...text-align: (left|center|right)...">content</tag>
+    const regex = /<(span|p|div)\s+style="[^"]*text-align:\s*(left|center|right);?[^"]*">(.*?)<\/\1>/si;
+    const match = blockContent.match(regex);
+
+    if (match) {
+      const currentAlign = match[2];
+      const content = match[3];
+      
+      if (currentAlign === align) {
+        // Toggle off: remove the tag entirely
+        const newText = markdown.substring(0, lineStart) + content + markdown.substring(lineEnd);
+        setMarkdown(newText);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(lineStart, lineStart + content.length);
+        }, 0);
+      } else {
+        // Switch alignment: replace the existing tag with a clean new one
+        const wrapped = `<span style="display:block;text-align:${align}">${content}</span>`;
+        const newText = markdown.substring(0, lineStart) + wrapped + markdown.substring(lineEnd);
+        setMarkdown(newText);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(lineStart, lineStart + wrapped.length);
+        }, 0);
+      }
+    } else {
+      // Toggle on: wrap the whole line
+      const wrapped = `<span style="display:block;text-align:${align}">${blockContent}</span>`;
+      const newText = markdown.substring(0, lineStart) + wrapped + markdown.substring(lineEnd);
+      setMarkdown(newText);
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(lineStart, lineStart + wrapped.length);
+      }, 0);
+    }
   };
 
   const handleImageUpload = (file: File) => {
-    const textarea = textareaRef.current;
-    // Capture insertion point - default to end if no selection
-    const startPos = textarea ? textarea.selectionStart : markdown.length;
-    const endPos = textarea ? textarea.selectionEnd : markdown.length;
-
-    // Calculate which card this insertion point belongs to
-    // Split text by separator up to the cursor position
-    const textBefore = markdown.substring(0, startPos);
-    // The separator is "\n---\n". We can match it.
-    // The logic in store/preview is `split(/\n\s*---\s*\n|^\s*---\s*$/m)`.
-    const separators = textBefore.match(/\n\s*---\s*\n|^\s*---\s*$/gm);
-    const targetCardIndex = separators ? separators.length : 0;
-
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result) {
         const imageUrl = e.target.result as string;
         
+        const textarea = textareaRef.current;
+        // Capture insertion point - default to end if no selection
+        const startPos = textarea ? textarea.selectionStart : markdown.length;
+        const textBefore = markdown.substring(0, startPos);
+        const separators = textBefore.match(/\n\s*---\s*\n|^\s*---\s*$/gm);
+        const targetCardIndex = separators ? separators.length : 0;
+        const spacerId = Math.random().toString(36).substring(2, 9);
+
         // Add to store (this will create the floating image)
-        addCardImage(targetCardIndex, imageUrl);
+        addCardImage(targetCardIndex, imageUrl, undefined, spacerId);
         
-        // Insert spacer syntax to create layout space
-        // Using a special image syntax that we'll intercept in Preview
-        const spacerMarkdown = `\n![spacer](spacer)\n`;
-        
+        const endPos = textarea ? textarea.selectionEnd : markdown.length;
+        const spacerMarkdown = `\n![spacer](spacer?id=${spacerId})\n`;
         const newText = markdown.substring(0, startPos) + spacerMarkdown + markdown.substring(endPos);
         setMarkdown(newText);
         
-        // Restore focus and move cursor after the inserted spacer
         setTimeout(() => {
           if (textarea) {
             textarea.focus();
@@ -294,7 +437,7 @@ export const Editor = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -400, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute left-6 top-20 bottom-6 w-[400px] glass-panel rounded-2xl flex flex-col z-40 overflow-hidden"
+            className="absolute left-6 top-20 bottom-6 w-[400px] glass-panel rounded-2xl flex flex-col z-40 select-text"
           >
             <div className="flex items-center justify-between p-4 border-b border-black/10 dark:border-white/10">
               <div className="flex items-center gap-2 text-sm font-semibold opacity-80">
@@ -310,104 +453,223 @@ export const Editor = () => {
             </div>
 
             {/* Toolbar */}
-            <div className="flex items-center gap-0.5 p-2 border-b border-black/10 dark:border-white/10 overflow-x-auto custom-scrollbar no-scrollbar">
-              <button onClick={() => toggleInlineStyle('**')} title="Bold" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <Bold size={16} />
-              </button>
-              <button onClick={() => toggleInlineStyle('*')} title="Italic" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <Italic size={16} />
-              </button>
-              <button onClick={() => toggleInlineStyle('~~')} title="Strikethrough" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <Strikethrough size={16} />
-              </button>
-              <button onClick={() => toggleBlockStyle('#')} title="H1" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <Heading1 size={16} />
-              </button>
-              <button onClick={() => toggleBlockStyle('##')} title="H2" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <Heading2 size={16} />
-              </button>
-              <button onClick={() => toggleBlockStyle('-')} title="List" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <List size={16} />
-              </button>
-              <button onClick={() => toggleBlockStyle('>')} title="Quote" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <Quote size={16} />
-              </button>
-              <button onClick={() => insertText('[', '](url)')} title="Link" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0">
-                <Link size={16} />
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                title="Image"
-                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-70 hover:opacity-100 shrink-0"
-              >
-                <ImageIcon size={16} />
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImageUpload(file);
-                  // Reset input value to allow selecting same file again
-                  e.target.value = '';
-                }}
-              />
-              <div className="w-px h-4 bg-black/10 dark:bg-white/10 mx-1 shrink-0" />
-              <button
-                onClick={() => {
-                   // If in auto-height mode, switch to portrait first to enable pagination
-                   if (cardStyle.autoHeight) {
-                       useStore.getState().updateCardStyle({ autoHeight: false, orientation: 'portrait' });
-                   }
-                   
-                   // Wait for state to update (using setTimeout for simple sync)
-                   setTimeout(() => {
-                      const currentStyle = useStore.getState().cardStyle;
-                      const paginatedArr = paginateMarkdown(markdown, currentStyle);
-                      const paginated = paginatedArr.join('\n\n---\n\n');
-                      if (paginated !== markdown) {
-                         setMarkdown(paginated);
-                         setShowPaginationToast(true);
-                         setTimeout(() => setShowPaginationToast(false), 4000);
-                     }
-                   }, 0);
-                }}
-                title={t.autoPaginate}
-                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors opacity-90 hover:opacity-100 group shrink-0"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path 
-                    d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" 
-                    fill="url(#star-gradient)"
-                    stroke="url(#star-gradient)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                  />
-                  <defs>
-                    <linearGradient id="star-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#93C5FD" />
-                      <stop offset="0.5" stopColor="#60A5FA" />
-                      <stop offset="1" stopColor="#3B82F6" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </button>
-            </div>
-            
-            <textarea
-              id="markdown-editor"
-              name="markdown"
-              aria-label="Markdown Editor"
-              ref={textareaRef}
-              className="flex-1 w-full h-full bg-transparent resize-none focus:outline-none font-mono text-sm leading-relaxed p-4 text-inherit placeholder-inherit/50 custom-scrollbar"
-              value={markdown}
-              onChange={(e) => setMarkdown(e.target.value)}
-              onPaste={handlePaste}
-              placeholder="Type your markdown here..."
+            {/* Hidden File Input for Image Upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload(file);
+                // Reset input value to allow selecting same file again
+                e.target.value = '';
+              }}
             />
+
+            <div className="flex-shrink-0 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 p-2">
+                <div className="flex items-center gap-1">
+                  {/* Basic Styles */}
+                  <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-lg p-0.5">
+                    <button onMouseDown={(e) => { e.preventDefault(); toggleInlineStyle('**'); }} title="粗体" className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100">
+                      <Bold size={16} />
+                    </button>
+                    <button onMouseDown={(e) => { e.preventDefault(); toggleInlineStyle('*'); }} title="斜体" className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100">
+                      <Italic size={16} />
+                    </button>
+                    <button onMouseDown={(e) => { e.preventDefault(); toggleInlineStyle('~~'); }} title="删除线" className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100">
+                      <Strikethrough size={16} />
+                    </button>
+                    <button onMouseDown={(e) => { e.preventDefault(); toggleInlineStyle('<u>'); }} title="下划线" className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100">
+                      <Underline size={16} />
+                    </button>
+                  </div>
+
+                  {/* Heading Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onMouseDown={(e) => { e.preventDefault(); setActiveMenu(activeMenu === 'heading' ? null : 'heading'); }}
+                      title="标题"
+                      className={`flex items-center p-1 rounded-lg transition-colors ${activeMenu === 'heading' ? 'bg-black/10 dark:bg-white/20 opacity-100' : 'bg-black/5 dark:bg-white/5 opacity-70 hover:opacity-100'}`}
+                    >
+                      <Heading1 size={16} />
+                      <ChevronRight size={10} className={`transition-transform ${activeMenu === 'heading' ? 'rotate-90' : ''} opacity-50`} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {activeMenu === 'heading' && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-black/10 dark:border-white/10 p-1 flex flex-col gap-1"
+                        >
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockStyle('#'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <Heading1 size={14} /> 标题 1
+                          </button>
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockStyle('##'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <Heading2 size={14} /> 标题 2
+                          </button>
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockStyle('###'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <Heading3 size={14} /> 标题 3
+                          </button>
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockStyle('####'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <Heading4 size={14} /> 标题 4
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Alignment Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onMouseDown={(e) => { e.preventDefault(); setActiveMenu(activeMenu === 'align' ? null : 'align'); }}
+                      title="对齐方式"
+                      className={`flex items-center p-1 rounded-lg transition-colors ${activeMenu === 'align' ? 'bg-black/10 dark:bg-white/20 opacity-100' : 'bg-black/5 dark:bg-white/5 opacity-70 hover:opacity-100'}`}
+                    >
+                      <AlignCenter size={16} />
+                      <ChevronRight size={10} className={`transition-transform ${activeMenu === 'align' ? 'rotate-90' : ''} opacity-50`} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {activeMenu === 'align' && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-black/10 dark:border-white/10 p-1 flex flex-col gap-1"
+                        >
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleAlignment('left'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <AlignLeft size={14} /> 左对齐
+                          </button>
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleAlignment('center'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <AlignCenter size={14} /> 居中对齐
+                          </button>
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleAlignment('right'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <AlignRight size={14} /> 右对齐
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Lists Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onMouseDown={(e) => { e.preventDefault(); setActiveMenu(activeMenu === 'list' ? null : 'list'); }}
+                      title="列表"
+                      className={`flex items-center p-1 rounded-lg transition-colors ${activeMenu === 'list' ? 'bg-black/10 dark:bg-white/20 opacity-100' : 'bg-black/5 dark:bg-white/5 opacity-70 hover:opacity-100'}`}
+                    >
+                      <List size={16} />
+                      <ChevronRight size={10} className={`transition-transform ${activeMenu === 'list' ? 'rotate-90' : ''} opacity-50`} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {activeMenu === 'list' && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-black/10 dark:border-white/10 p-1 flex flex-col gap-1"
+                        >
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockStyle('-'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <List size={14} /> 无序列表
+                          </button>
+                          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockStyle('1.'); }} className="flex items-center gap-2 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-sm whitespace-nowrap">
+                            <ListOrdered size={14} /> 有序列表
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Quote & Others */}
+                  <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-lg p-0.5">
+                    <button onMouseDown={(e) => { e.preventDefault(); toggleBlockStyle('>'); }} title="引用" className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100">
+                      <Quote size={16} />
+                    </button>
+                  </div>
+
+                  {/* Insert Tools */}
+                  <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-lg p-0.5">
+                    <button onMouseDown={(e) => { e.preventDefault(); insertText('[', '](url)'); }} title="链接" className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100">
+                      <Link size={16} />
+                    </button>
+                    <button
+                      onMouseDown={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}
+                      title="图片"
+                      className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100"
+                    >
+                      <ImageIcon size={16} />
+                    </button>
+                    <button 
+                      onMouseDown={(e) => { e.preventDefault(); insertBlankLine(); }} 
+                      title="插入空行" 
+                      className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-70 hover:opacity-100"
+                    >
+                      <CornerDownLeft size={16} />
+                    </button>
+                  </div>
+
+                  {/* Special Tools */}
+                  <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-lg p-0.5 ml-auto">
+                    <button
+                      onClick={() => {
+                        // If in auto-height mode, switch to portrait first to enable pagination
+                        if (cardStyle.autoHeight) {
+                            useStore.getState().updateCardStyle({ autoHeight: false, orientation: 'portrait' });
+                        }
+                        
+                        // Wait for state to update (using setTimeout for simple sync)
+                        setTimeout(() => {
+                          const currentStyle = useStore.getState().cardStyle;
+                          const paginatedArr = paginateMarkdown(markdown, currentStyle);
+                          const paginated = paginatedArr.join('\n\n---\n\n');
+                          if (paginated !== markdown) {
+                              setMarkdown(paginated);
+                              setShowPaginationToast(true);
+                              setTimeout(() => setShowPaginationToast(false), 4000);
+                          }
+                        }, 0);
+                      }}
+                      title="自动分页"
+                      className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors opacity-90 hover:opacity-100 group"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path 
+                          d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" 
+                          fill="url(#star-gradient-2)"
+                          stroke="url(#star-gradient-2)"
+                          strokeWidth="1.5"
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        />
+                        <defs>
+                          <linearGradient id="star-gradient-2" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#93C5FD" />
+                            <stop offset="0.5" stopColor="#60A5FA" />
+                            <stop offset="1" stopColor="#3B82F6" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            
+              <textarea
+                id="markdown-editor"
+                name="markdown"
+                aria-label="Markdown Editor"
+                ref={textareaRef}
+                className="flex-1 w-full h-full bg-transparent resize-none focus:outline-none font-mono text-sm leading-relaxed p-4 text-inherit placeholder-inherit/50 custom-scrollbar"
+                value={markdown}
+                onChange={(e) => setMarkdown(e.target.value)}
+                onPaste={handlePaste}
+                placeholder="Type your markdown here..."
+              />
+
             <div className="p-3 border-t border-black/10 dark:border-white/10 text-center space-y-1.5 bg-black/5 dark:bg-white/5">
               <div className="text-sm font-bold text-blue-600 dark:text-blue-400 opacity-90">
                 {t.editorHint}

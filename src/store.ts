@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { getCardDimensions } from './utils/cardUtils';
 
 export type CustomFont = {
   name: string;
@@ -15,7 +16,12 @@ export type CardImage = {
   y: number;
   width: number;
   height: number;
+  naturalWidth?: number;
+  naturalHeight?: number;
   rotation: number;
+  resizeMode: 'cover' | 'contain' | 'fill' | 'none';
+  spacerId?: string;
+  isAttachedToSpacer?: boolean;
   crop: {
     x: number;
     y: number;
@@ -31,6 +37,7 @@ export type CardStyle = {
   aspectRatio: '1:1' | '4:3' | '3:2' | '16:9' | 'custom';
   orientation: 'portrait' | 'landscape';
   autoHeight: boolean;
+  layoutMode: 'portrait' | 'landscape' | 'long' | 'flexible';
   width: number;
   height: number;
   borderRadius: number;
@@ -102,6 +109,8 @@ export type CardStyle = {
   h2BackgroundColor: string; // Background for H2 pill
   h3Color: string;
   h3LineColor: string;
+  underlineColor: string;
+  strikethroughColor: string;
 
   // Shadow
   shadowEnabled: boolean;
@@ -122,7 +131,8 @@ export type CardStyle = {
     position: 'left' | 'center' | 'right';
     opacity: number;
     fontSize: number;
-    color?: string;
+    color: string;
+    uppercase: boolean;
   };
 
   // Page Number
@@ -158,7 +168,7 @@ interface AppState {
   setActiveCardIndex: (index: number) => void;
 
   cardImages: Record<number, CardImage[]>;
-  addCardImage: (cardIndex: number, src: string, id?: string) => void;
+  addCardImage: (cardIndex: number, src: string, id?: string, spacerId?: string) => void;
   updateCardImage: (cardIndex: number, imageId: string, updates: Partial<CardImage>) => void;
   removeCardImage: (cardIndex: number, imageId: string) => void;
   
@@ -237,13 +247,14 @@ console.log('代码块也能完美显示！');
 - 功能 3`;
 
 const INITIAL_CARD_STYLE: CardStyle = {
-  fontFamily: 'Inter',
+  fontFamily: 'GoogleSans-Regular',
   backgroundColor: '#ffffff',
   textColor: '#000000',
   accentColor: '#3b82f6',
   aspectRatio: '4:3',
   orientation: 'portrait',
   autoHeight: false,
+  layoutMode: 'portrait',
   width: 800,
   height: 600,
   borderRadius: 24,
@@ -273,7 +284,7 @@ const INITIAL_CARD_STYLE: CardStyle = {
   cardPaddingSync: true,
   customCSS: '',
       template: 'default',
-      fontSize: 16,
+  fontSize: 18,
   h1FontSize: 32,
   h2FontSize: 24,
   h3FontSize: 20,
@@ -301,6 +312,8 @@ const INITIAL_CARD_STYLE: CardStyle = {
   h2BackgroundColor: '#3b82f6',
   h3Color: '#000000',
   h3LineColor: '#3b82f6',
+  underlineColor: '#3b82f6',
+  strikethroughColor: '#000000',
   shadowEnabled: false,
   shadow: 'none',
   shadowConfig: {
@@ -317,7 +330,8 @@ const INITIAL_CARD_STYLE: CardStyle = {
     position: 'center',
     opacity: 0.5,
     fontSize: 10,
-    color: '' // Empty means use default text color
+    color: '', // Empty means use default text color
+    uppercase: true
   },
   pageNumber: {
     enabled: false,
@@ -375,18 +389,56 @@ export const useStore = create<AppState>()(
   setActiveCardIndex: (index) => set({ activeCardIndex: index }),
 
   cardImages: {},
-  addCardImage: (cardIndex, src, id) => set((state) => {
+  addCardImage: (cardIndex, src, id, spacerId) => set((state) => {
     const images = state.cardImages[cardIndex] || [];
+    
+    // Create an image object to get natural dimensions
+    const img = new Image();
+    img.src = src;
+    
     const newImage: CardImage = {
       id: id || crypto.randomUUID(),
       src,
+      spacerId,
+      isAttachedToSpacer: !!spacerId,
       x: 50,
       y: 50,
-      width: 200, // Default width
-      height: 200, // Default height - will be adjusted by aspect ratio in render if needed, or by user
+      width: 200, // Initial default, will be updated if possible
+      height: 200,
+      naturalWidth: 200,
+      naturalHeight: 200,
       rotation: 0,
+      resizeMode: 'cover',
       crop: { x: 0, y: 0, scale: 1 },
     };
+
+    // If image is already loaded (from cache), or when it loads, we could update dimensions.
+    // However, since this is a setter, we can't easily do async here without changing the store structure.
+    // Let's assume the user will resize it anyway, or we can try to get dimensions if they're available.
+    if (img.complete) {
+      const { width: cardWidth } = getCardDimensions(state.cardStyle);
+      const targetWidth = cardWidth * 0.7;
+      const scale = targetWidth / img.naturalWidth;
+      
+      newImage.width = targetWidth;
+      newImage.height = img.naturalHeight * scale;
+      newImage.naturalWidth = img.naturalWidth;
+      newImage.naturalHeight = img.naturalHeight;
+    } else {
+      img.onload = () => {
+        const { width: cardWidth } = useStore.getState().cardStyle ? getCardDimensions(useStore.getState().cardStyle) : { width: 800 };
+        const targetWidth = cardWidth * 0.7;
+        const scale = targetWidth / img.naturalWidth;
+
+        useStore.getState().updateCardImage(cardIndex, newImage.id, {
+          width: targetWidth,
+          height: img.naturalHeight * scale,
+          naturalWidth: img.naturalWidth,
+          naturalHeight: img.naturalHeight
+        });
+      };
+    }
+
     return {
       cardImages: {
         ...state.cardImages,
@@ -434,21 +486,13 @@ export const useStore = create<AppState>()(
         // but easier to just use hex and assume browser handles or user provides rgba.
         // Actually user provides hex color usually. We need to apply opacity.
         // Let's assume color is HEX.
-        let r = 0, g = 0, b = 0;
-        if (color.startsWith('#')) {
-          const hex = color.substring(1);
-          if (hex.length === 3) {
-            r = parseInt(hex[0] + hex[0], 16);
-            g = parseInt(hex[1] + hex[1], 16);
-            b = parseInt(hex[2] + hex[2], 16);
-          } else if (hex.length === 6) {
-            r = parseInt(hex.substring(0, 2), 16);
-            g = parseInt(hex.substring(2, 4), 16);
-            b = parseInt(hex.substring(4, 6), 16);
-          }
-        }
-        
-        newStyle.shadow = `${x}px ${y}px ${blur}px ${spread}px rgba(${r}, ${g}, ${b}, ${opacity})`;
+  const [r, g, b] = color.startsWith('#') 
+    ? (color.length === 4 
+        ? [parseInt(color[1] + color[1], 16), parseInt(color[2] + color[2], 16), parseInt(color[3] + color[3], 16)]
+        : [parseInt(color.substring(1, 3), 16), parseInt(color.substring(3, 5), 16), parseInt(color.substring(5, 7), 16)])
+    : [0, 0, 0];
+  
+  newStyle.shadow = `${x}px ${y}px ${blur}px ${spread}px rgba(${r}, ${g}, ${b}, ${opacity})`;
       }
     }
 
@@ -496,7 +540,19 @@ export const useStore = create<AppState>()(
   deletePreset: (id) => set((state) => ({
     presets: state.presets.filter((p) => p.id !== id)
   })),
-  applyPreset: (style) => set({ cardStyle: JSON.parse(JSON.stringify(style)) }),
+  applyPreset: (style) => {
+    const mergedStyle = {
+      ...INITIAL_CARD_STYLE,
+      ...style,
+      watermark: { ...INITIAL_CARD_STYLE.watermark, ...(style.watermark || {}) },
+      pageNumber: { ...INITIAL_CARD_STYLE.pageNumber, ...(style.pageNumber || {}) },
+      backgroundConfig: { ...INITIAL_CARD_STYLE.backgroundConfig, ...(style.backgroundConfig || {}) },
+      cardBackgroundConfig: { ...INITIAL_CARD_STYLE.cardBackgroundConfig, ...(style.cardBackgroundConfig || {}) },
+      shadowConfig: { ...INITIAL_CARD_STYLE.shadowConfig, ...(style.shadowConfig || {}) },
+      cardPadding: { ...INITIAL_CARD_STYLE.cardPadding, ...(style.cardPadding || {}) },
+    };
+    set({ cardStyle: JSON.parse(JSON.stringify(mergedStyle)) });
+  },
 
   isEditorOpen: true,
   setIsEditorOpen: (isOpen) => set({ isEditorOpen: isOpen }),
@@ -509,9 +565,22 @@ export const useStore = create<AppState>()(
     {
       name: 'md2card-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 3,
-      migrate: (persistedState: unknown, version: number) => {
-        const state = persistedState as Partial<AppState>;
+      version: 6,
+      migrate: (persistedState: any, version: number) => {
+        if (!persistedState) return persistedState;
+        const state = persistedState as any;
+
+        // Ensure layoutMode exists if cardStyle exists (robustness check)
+        if (state.cardStyle && !state.cardStyle.layoutMode) {
+          let layoutMode: 'portrait' | 'landscape' | 'long' | 'flexible' = 'portrait';
+          if (state.cardStyle.autoHeight) {
+            layoutMode = 'long';
+          } else if (state.cardStyle.orientation === 'landscape') {
+            layoutMode = 'landscape';
+          }
+          state.cardStyle.layoutMode = layoutMode;
+        }
+
         if (version === 0) {
           // Migration for v0 to v1: Add headingScale and contentPadding
           if (state.cardStyle) {
@@ -549,6 +618,39 @@ export const useStore = create<AppState>()(
             };
           }
         }
+        if (version <= 3) {
+          // Migration for v3 to v4: Add watermark and pageNumber
+          if (state.cardStyle) {
+            state.cardStyle = {
+              ...state.cardStyle,
+              watermark: state.cardStyle.watermark ?? INITIAL_CARD_STYLE.watermark,
+              pageNumber: state.cardStyle.pageNumber ?? INITIAL_CARD_STYLE.pageNumber,
+            };
+          }
+        }
+        if (version <= 4) {
+          // Migration for v4 to v5: Add resizeMode to cardImages
+          if (state.cardImages) {
+            Object.keys(state.cardImages).forEach(cardIndex => {
+              state.cardImages[cardIndex] = state.cardImages[cardIndex].map((img: any) => ({
+                ...img,
+                resizeMode: img.resizeMode ?? 'cover'
+              }));
+            });
+          }
+        }
+        if (version <= 5) {
+          // Migration for v5 to v6: Add layoutMode
+          if (state.cardStyle) {
+            let layoutMode: 'portrait' | 'landscape' | 'long' | 'flexible' = 'portrait';
+            if (state.cardStyle.autoHeight) {
+              layoutMode = 'long';
+            } else if (state.cardStyle.orientation === 'landscape') {
+              layoutMode = 'landscape';
+            }
+            state.cardStyle.layoutMode = layoutMode;
+          }
+        }
         return state;
       },
       partialize: (state) => ({
@@ -563,7 +665,8 @@ export const useStore = create<AppState>()(
         isSidebarOpen: state.isSidebarOpen,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state?.theme === 'dark') {
+        if (!state) return;
+        if (state.theme === 'dark') {
           document.documentElement.classList.add('dark');
         } else {
           document.documentElement.classList.remove('dark');

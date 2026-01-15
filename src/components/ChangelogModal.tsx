@@ -1,11 +1,12 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame } from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue, useAnimation } from 'framer-motion';
+import { X, CheckCircle2, Sparkles, Monitor, ChevronRight, RotateCcw, Plus, Image as ImageIcon, Trash2, Maximize2, MessageSquare, ChevronDown, Check as CheckIcon, Layout, List, Square, Frame, ThumbsUp, Info, Github, Languages, Sun, StretchHorizontal, MousePointer2, Crop, CornerDownLeft } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useStore } from '../store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-import { useState, useEffect, useMemo } from 'react';
+import rehypeRaw from 'rehype-raw';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -27,9 +28,161 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   const t = useTranslation();
   const { language } = useStore();
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   // Update data
   const updates = useMemo(() => [
+    {
+      version: 'v1.9.1',
+      date: '2026-01-10',
+      title: {
+        en: 'Text Styling & Watermark Polish',
+        zh: '文本样式修复与水印优化'
+      },
+      changes: {
+        en: [
+          '1. Fixed: Bold, Italic, and Strikethrough text now correctly apply the configured text color.',
+          '2. Added: Independent color controls for Underline and Strikethrough text.',
+          '3. Added: Underline shortcut button (<u>) in the editor toolbar.',
+          '4. Added: Uppercase toggle for Watermark settings (allows disabling all-caps mode).',
+          '5. UI: Improved color settings layout for better accessibility.',
+          '6. Fixed: An issue where the watermark and page number might not display in the footer.',
+        ],
+        zh: [
+          '1. 修复：加粗、斜体和删除线文本现在可以正确应用所选的颜色；',
+          '2. 新增：下划线和删除线的独立颜色控制功能；',
+          '3. 新增：编辑器工具栏下划线快捷按钮（支持 <u> 标签）；',
+          '4. 新增：水印大小写开关，支持关闭强制大写模式；',
+          '5. 优化：改进了侧边栏颜色设置的布局；',
+          '6. 修复：水印和页码在卡片底部可能无法显示的问题。',
+        ]
+      }
+    },
+    {
+      version: 'v1.9.0',
+      date: '2026-01-08',
+      title: {
+        en: 'Flexible Layout Mode',
+        zh: '新增“灵活”布局模式'
+      },
+      changes: {
+        en: [
+          '1. Added "Flexible" layout mode: Cards now automatically adjust their height based on content.',
+          '2. Smart Pagination: Use "---" to split content into multiple cards with independent heights.',
+          'Special thanks to anonymous user feedback.',
+        ],
+        zh: [
+          '1. 新增“灵活”布局模式：卡片高度现在会根据内容自动收缩，告别固定比例限制；',
+          '2. 智能分页支持：在灵活模式下使用 "---" 分隔符，可将长文拆分为多张高度自适应的独立卡片；',
+          '本次更新感谢匿名用户的反馈。',
+        ]
+      },
+      demo: 'v190-features'
+    },
+    {
+      version: 'v1.8.5',
+      date: '2026-01-08',
+      title: {
+        en: 'Flexible Spacing with Blank Lines',
+        zh: '灵活的空行间距控制'
+      },
+      changes: {
+        en: [
+          '1. Added "Insert Blank Line" button to the toolbar for easier vertical spacing control.',
+          '2. Fixed deployment issue related to unused variables.',
+          '3. Enhanced interactive demo in changelog.',
+          'Special thanks to anonymous user feedback.',
+        ],
+        zh: [
+          '1. 新增工具栏“插入空行”按钮，轻松实现多行连空效果；',
+          '2. 修复了由于未使用的变量导致的部署报错问题；',
+          '3. 优化了更新日志的可交互功能演示。',
+          '本次更新感谢匿名用户的反馈。',
+        ]
+      },
+      demo: 'v185-features'
+    },
+    {
+      version: 'v1.8.4',
+      date: '2026-01-08',
+      title: {
+        en: 'Editor Layout & Alignment Polish',
+        zh: '编辑器布局与对齐优化'
+      },
+      changes: {
+        en: [
+          '1. Added text alignment (center/left/right) and ordered list buttons.',
+          '2. Optimized editor UI display.',
+          '3. Special thanks to anonymous user feedback.',
+        ],
+        zh: [
+          '1.新增文本居中/左右对齐排列编辑功能以及有序列表按钮；',
+          '2.优化编辑器功能UI显示；',
+          '3.本次更新感谢匿名用户的反馈。',
+        ]
+      },
+      demo: 'v184-features'
+    },
+    {
+      version: 'v1.8.3',
+      date: '2026-01-06',
+      title: {
+        en: 'Advanced Image Control',
+        zh: '进阶图片控制'
+      },
+      changes: {
+        en: [
+          'Four Image Editing Modes: Added "Fill", "Fit", "Crop", and "Stretch" modes. Crop mode allows freely adjusting the mask without scaling the image.',
+          'Smart Image Snapping: Added 15px snap threshold for horizontal centering, ensuring pixel-perfect alignment during drag-and-drop.',
+          'UI & Interaction: Enhanced image toolbar with intuitive icons and smart positioning; fixed text selection and visual artifacts in the editor.',
+        ],
+        zh: [
+          '四种图片编辑模式：新增“填充(Fill)”、“等比缩放”、“裁切(Crop)”和“拉伸(Stretch)”模式。裁切模式下可自由调整蒙版，不再受比例限制。',
+          '图片居中吸附：新增 15px 智能吸附阈值，拖拽图片靠近居中线时自动精准对齐，实现像素级排版。',
+          '界面与交互优化：重构了图片工具栏图标与定位逻辑；修复了编辑器下的文本选择、空行点击及视觉瑕疵问题。',
+        ]
+      },
+      demo: 'v183-features'
+    },
+    {
+      version: 'v1.8.2',
+      date: '2026-01-06',
+      title: {
+        en: 'Smart Snap & Page Stability',
+        zh: '智能吸附 & 页面稳定性'
+      },
+      changes: {
+        en: [
+          'Enhanced Image Snapping: Redesigned centering snap logic with breakout support for professional editing experience.',
+          'Zero-Drift Locking: Images now lock precisely on the center axis with zero jitter within the threshold.',
+          'Problem Feedback: @迷迭香741910496',
+        ],
+        zh: [
+          '智能图片吸附：重构居中吸附逻辑，支持“跳跃式脱离”，提供专业级的设计编辑体验。',
+          '零抖动锁定：图片在吸附阈值内实现绝对静止锁定，彻底消除拖拽过程中的视觉抖动。',
+          '问题反馈：@迷迭香741910496',
+        ]
+      }
+    },
+    {
+      version: 'v1.8.1',
+      date: '2026-01-02',
+      title: {
+        en: 'Support Page & Manual Input',
+        zh: '赞赏页面 & 参数手动输入'
+      },
+      changes: {
+        en: [
+          'Brand new support/donation flow with dedicated QR codes and persistent tips.',
+          'Manual input support: Click on any numeric parameter value to type precisely.',
+        ],
+        zh: [
+          '全新的赞赏/打赏流程：新增专属收款码与常驻打赏提示框，支持作者不再迷路。',
+          '参数手动输入：点击任意数值参数即可直接输入精确数值，告别滑动误差。',
+        ]
+      },
+      demo: 'v181-features'
+    },
     {
       version: 'v1.8.0',
       date: '2025-12-31',
@@ -268,6 +421,24 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
     }
   ], []);
 
+  const currentUpdate = updates.find(u => u.version === selectedVersion) || updates[0];
+
+  // Group updates by minor version (e.g., v1.8.x under v1.8)
+  const groupedUpdates = updates.reduce((acc, update) => {
+    const versionParts = update.version.split('.');
+    const minorVersion = `${versionParts[0]}.${versionParts[1]}`;
+    if (!acc[minorVersion]) acc[minorVersion] = [];
+    acc[minorVersion].push(update);
+    return acc;
+  }, {} as Record<string, typeof updates>);
+
+  const minorVersions = Object.keys(groupedUpdates).sort((a, b) => {
+    const aParts = a.slice(1).split('.').map(Number);
+    const bParts = b.slice(1).split('.').map(Number);
+    if (aParts[0] !== bParts[0]) return bParts[0] - aParts[0];
+    return bParts[1] - aParts[1];
+  });
+
   useEffect(() => {
     if (isOpen && !selectedVersion) {
       setTimeout(() => {
@@ -276,7 +447,14 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
     }
   }, [isOpen, selectedVersion, updates]);
 
-  const currentUpdate = updates.find(u => u.version === selectedVersion) || updates[0];
+  // Auto-expand group of selected version
+  useEffect(() => {
+    if (selectedVersion) {
+      const versionParts = selectedVersion.split('.');
+      const minorVersion = `${versionParts[0]}.${versionParts[1]}`;
+      setExpandedGroups(prev => ({ ...prev, [minorVersion]: true }));
+    }
+  }, [selectedVersion]);
 
   return (
     <AnimatePresence>
@@ -336,29 +514,85 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                </div>
                
                <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-4 space-y-1">
-                  {updates.map((update) => (
-                    <button
-                      key={update.version}
-                      onClick={() => setSelectedVersion(update.version)}
-                      className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${
-                        selectedVersion === update.version 
-                          ? 'bg-white dark:bg-white/10 shadow-md dark:shadow-black/40' 
-                          : 'hover:bg-black/5 dark:hover:bg-white/5'
-                      }`}
-                    >
-                      <div>
-                        <div className={`text-sm font-bold ${selectedVersion === update.version ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                          {update.version}
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                          {update.date}
-                        </div>
+                  {minorVersions.map((minorVersion) => {
+                    const group = groupedUpdates[minorVersion];
+                    const isExpanded = expandedGroups[minorVersion];
+                    const hasMultiple = group.length > 1;
+                    const latestInGroup = group[0];
+                    const isSelectedInGroup = selectedVersion?.startsWith(minorVersion);
+                    
+                    return (
+                      <div key={minorVersion} className="space-y-1">
+                        {/* Minor Version Header */}
+                        <motion.button
+                          whileHover={{ scale: 1.02, x: 5 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            if (hasMultiple) {
+                              setExpandedGroups(prev => ({ ...prev, [minorVersion]: !prev[minorVersion] }));
+                            } else {
+                              setSelectedVersion(latestInGroup.version);
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${
+                            isSelectedInGroup && (!hasMultiple || !isExpanded)
+                              ? 'bg-white dark:bg-white/10 shadow-md dark:shadow-black/40 border border-black/5 dark:border-white/10' 
+                              : 'hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {hasMultiple ? (
+                              <ChevronDown 
+                                size={14} 
+                                className={`text-slate-400 transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'}`} 
+                              />
+                            ) : (
+                              <div className="w-3.5" />
+                            )}
+                            <div>
+                              <div className={`text-sm font-bold ${isSelectedInGroup && (!hasMultiple || !isExpanded) ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                {minorVersion}.x
+                              </div>
+                              {(!isExpanded || !hasMultiple) && (
+                                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                                  {latestInGroup.date}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {isSelectedInGroup && (!hasMultiple || !isExpanded) && (
+                            <ChevronRight size={14} className="text-blue-500 opacity-100" />
+                          )}
+                        </motion.button>
+
+                        {/* Patch Versions (Secondary Menu) */}
+                        {hasMultiple && isExpanded && (
+                          <div className="ml-4 pl-2 border-l border-black/5 dark:border-white/10 space-y-1 py-1">
+                            {group.map((update) => (
+                              <motion.button
+                                key={update.version}
+                                whileHover={{ x: 3, backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setSelectedVersion(update.version)}
+                                className={`w-full text-left px-4 py-2.5 rounded-lg transition-all flex items-center justify-between group ${
+                                  selectedVersion === update.version 
+                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5'
+                                }`}
+                              >
+                                <div className="text-xs font-semibold">
+                                  {update.version}
+                                </div>
+                                <div className="text-[9px] opacity-60 font-medium">
+                                  {update.date.split('-').slice(1).join('/')}
+                                </div>
+                              </motion.button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      {selectedVersion === update.version && (
-                        <ChevronRight size={14} className="text-blue-500 opacity-100" />
-                      )}
-                    </button>
-                  ))}
+                    );
+                  })}
                </div>
 
                <div className="p-4 border-t border-black/5 dark:border-white/5 text-center md:text-left">
@@ -397,14 +631,50 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                       {language === 'zh' ? currentUpdate.title.zh : currentUpdate.title.en}
                     </h2>
 
-                    <div className="space-y-3 mb-10">
-                      {(language === 'zh' ? currentUpdate.changes.zh : currentUpdate.changes.en).map((change, i) => (
-                        <div key={i} className="flex items-start gap-3 text-slate-600 dark:text-slate-300 leading-relaxed group">
-                          <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500/40 group-hover:bg-blue-500 transition-colors shrink-0" />
-                          <span>{change}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <motion.div 
+                      className="space-y-3 mb-10"
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        visible: {
+                          transition: {
+                            staggerChildren: 0.1
+                          }
+                        }
+                      }}
+                    >
+                      {(language === 'zh' ? currentUpdate.changes.zh : currentUpdate.changes.en).map((change, i) => {
+                        const isThanks = change.includes('感谢') || change.includes('thanks');
+                        return (
+                          <motion.div 
+                            key={i} 
+                            variants={{
+                              hidden: { opacity: 0, x: -10 },
+                              visible: { opacity: 1, x: 0 }
+                            }}
+                            whileHover={{ x: 5 }}
+                            className={`flex items-start gap-3 leading-relaxed group cursor-default py-2 px-3 rounded-xl transition-all ${
+                              isThanks 
+                                ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/10 text-blue-700 dark:text-blue-300 shadow-sm' 
+                                : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'
+                            }`}
+                          >
+                            <div className={`mt-2 w-1.5 h-1.5 rounded-full shrink-0 transition-all ${
+                              isThanks 
+                                ? 'bg-blue-500 animate-pulse' 
+                                : 'bg-blue-500/40 group-hover:bg-blue-500 group-hover:scale-125'
+                            }`} />
+                            <span className={`transition-colors ${
+                              isThanks 
+                                ? 'font-medium' 
+                                : 'group-hover:text-slate-900 dark:group-hover:text-white'
+                            }`}>
+                              {change}
+                            </span>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
 
                     {/* Interactive Demo Section */}
                     {currentUpdate.demo && (
@@ -417,6 +687,40 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
                               {language === 'zh' ? '功能演示' : 'Feature Demo'}
                             </h3>
                          </div>
+
+                         {currentUpdate.demo === 'v190-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoFlexibleLayout />
+                           </div>
+                         )}
+
+                         {currentUpdate.demo === 'v185-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoBlankLine />
+                           </div>
+                         )}
+
+                         {currentUpdate.demo === 'v184-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoAlignmentAndList />
+                           </div>
+                         )}
+
+                         {currentUpdate.demo === 'v183-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoImageModes />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoImageSnapping />
+                           </div>
+                         )}
+
+                         {currentUpdate.demo === 'v181-features' && (
+                           <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
+                              <DemoManualInput />
+                              <div className="w-full h-px bg-black/5 dark:bg-white/10" />
+                              <DemoSupportFlow />
+                           </div>
+                         )}
 
                          {currentUpdate.demo === 'v180-features' && (
                            <div className="bg-slate-100 dark:bg-[#0a0a0a] rounded-2xl p-6 md:p-8 border border-black/5 dark:border-white/10 shadow-inner min-h-[400px] flex flex-col items-center gap-12">
@@ -511,7 +815,604 @@ export const ChangelogModal = ({ isOpen, onClose }: ChangelogModalProps) => {
   );
 };
 
- const DemoProgressiveDisclosure = () => {
+const DemoFlexibleLayout = () => {
+  const { language } = useStore();
+  const [mode, setMode] = useState<'fixed' | 'flexible'>('flexible');
+  const [content, setContent] = useState(language === 'zh' ? '第一张卡片内容\n---\n第二张较长的卡片内容，展示灵活高度如何自适应不同长度的文本。' : 'First card content\n---\nSecond longer card content, demonstrating how flexible height adapts to different text lengths.');
+
+  const pages = content.split(/\n---\n/).filter(p => p.trim() !== '');
+  
+  return (
+    <div className="w-full max-w-md space-y-8">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center">
+        {language === 'zh' ? '灵活布局与智能分页演示' : 'Flexible Layout & Smart Pagination'}
+      </div>
+
+      <div className="flex flex-col gap-8 items-center">
+        {/* Layout Toggle */}
+        <div className="flex bg-white dark:bg-white/5 p-1 rounded-2xl border border-black/5 dark:border-white/10 shadow-sm">
+          <button 
+            onClick={() => setMode('fixed')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${mode === 'fixed' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400'}`}
+          >
+            {language === 'zh' ? '固定比例' : 'Fixed Ratio'}
+          </button>
+          <button 
+            onClick={() => setMode('flexible')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${mode === 'flexible' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400'}`}
+          >
+            {language === 'zh' ? '灵活模式' : 'Flexible Mode'}
+          </button>
+        </div>
+
+        {/* Multi-Card Preview Area */}
+        <div className="w-full flex flex-col items-center gap-4 min-h-[300px] p-4 bg-slate-50 dark:bg-white/5 rounded-3xl border border-black/5 dark:border-white/5 overflow-hidden">
+          <AnimatePresence mode="popLayout">
+            {pages.map((page, index) => (
+              <motion.div 
+                key={index}
+                layout
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="w-48 bg-white dark:bg-[#151515] rounded-xl border border-black/10 dark:border-white/10 shadow-xl overflow-hidden flex flex-col shrink-0"
+                style={{ 
+                  height: mode === 'fixed' ? '200px' : 'auto',
+                  minHeight: mode === 'flexible' ? '60px' : '200px'
+                }}
+              >
+                <div className="p-3 flex-1">
+                  <div className="w-6 h-1 bg-blue-500 rounded-full mb-2" />
+                  <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {page}
+                  </p>
+                </div>
+                <div className="p-1.5 border-t border-black/5 dark:border-white/5 flex justify-center">
+                  <div className="text-[8px] font-bold text-slate-300">PAGE {index + 1}</div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          
+          {mode === 'fixed' && pages.length > 1 && (
+             <div className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full animate-pulse">
+               {language === 'zh' ? '固定比例模式下存在大量留白' : 'Large gaps in Fixed Ratio mode'}
+             </div>
+          )}
+        </div>
+
+        {/* Editor Mock */}
+        <div className="w-full space-y-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Editor Content</span>
+              <button 
+                onClick={() => setContent(content + '\n---\n' + (language === 'zh' ? '新分页内容' : 'New Page Content'))}
+                className="text-[10px] font-bold text-blue-500 hover:text-blue-600 flex items-center gap-1"
+              >
+                <Plus size={10} />
+                {language === 'zh' ? '添加分页' : 'Add Page'}
+              </button>
+            </div>
+            <textarea 
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full h-24 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+              placeholder={language === 'zh' ? '输入 --- 进行分页...' : 'Use --- to split pages...'}
+            />
+          </div>
+          <p className="text-[10px] text-slate-400 text-center leading-relaxed italic px-4">
+            {language === 'zh' 
+              ? '在“灵活”模式下，不仅高度自适应内容，还能通过 "---" 实现多卡片独立排版。' 
+              : 'In "Flexible" mode, height adapts to content and "---" enables multi-card layouts.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoBlankLine = () => {
+  const { language } = useStore();
+  const [text, setText] = useState(language === 'zh' ? '第一行文本\n第二行文本' : 'First line\nSecond line');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const addBlankLine = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    const insert = '\n<br/>\n';
+    const newText = text.substring(0, start) + insert + text.substring(end);
+
+    setText(newText);
+    
+    // Use setTimeout to refocus and set cursor after React render
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + insert.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '空行间距演示' : 'Blank Line Spacing Demo'}
+      </div>
+
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/5">
+          <div className="text-sm font-bold text-slate-500">Editor</div>
+          <button
+            onMouseDown={(e) => { e.preventDefault(); addBlankLine(); }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+          >
+            <CornerDownLeft size={14} />
+            {language === 'zh' ? '插入空行' : 'Insert Blank Line'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 h-48">
+          <div className="flex flex-col gap-2">
+            <div className="text-[10px] font-bold text-slate-400 uppercase">Markdown</div>
+            <textarea 
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="flex-1 bg-slate-50 dark:bg-white/5 rounded-xl p-3 text-xs font-mono resize-none focus:outline-none border border-black/5 dark:border-white/5"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="text-[10px] font-bold text-slate-400 uppercase">Preview</div>
+            <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-xl p-3 text-xs overflow-y-auto custom-scrollbar border border-black/5 dark:border-white/5">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm, remarkBreaks]} 
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />
+                }}
+              >
+                {text}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-[10px] text-slate-400 text-center italic">
+          {language === 'zh' ? '点击“插入空行”按钮观察预览区的垂直间距变化' : 'Click "Insert Blank Line" to see vertical spacing changes'}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoAlignmentAndList = () => {
+  const { language } = useStore();
+  const [align, setAlign] = useState<'left' | 'center' | 'right'>('center');
+  const [listType, setListType] = useState<'none' | 'bullet' | 'ordered'>('none');
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '对齐与列表排版演示' : 'Alignment & List Demo'}
+      </div>
+
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-6">
+        {/* Mock Toolbar */}
+        <div className="flex items-center justify-center gap-2 pb-4 border-b border-black/5 dark:border-white/5">
+          <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+            {(['left', 'center', 'right'] as const).map((a) => (
+              <button
+                key={a}
+                onClick={() => setAlign(a)}
+                className={`p-2 rounded-lg transition-all ${align === a ? 'bg-white dark:bg-white/10 shadow-sm text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                {a === 'left' ? <Layout className="rotate-0" size={16} /> : a === 'center' ? <Layout className="rotate-0" size={16} /> : <Layout className="rotate-0" size={16} />}
+                {a === 'left' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
+                ) : a === 'center' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-px h-6 bg-black/5 dark:border-white/5" />
+
+          <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+            <button
+              onClick={() => setListType(listType === 'bullet' ? 'none' : 'bullet')}
+              className={`p-2 rounded-lg transition-all ${listType === 'bullet' ? 'bg-white dark:bg-white/10 shadow-sm text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setListType(listType === 'ordered' ? 'none' : 'ordered')}
+              className={`p-2 rounded-lg transition-all ${listType === 'ordered' ? 'bg-white dark:bg-white/10 shadow-sm text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <span className="text-[10px] font-bold">1.</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mock Content Area */}
+        <div className="min-h-[120px] flex flex-col justify-center px-4">
+          <motion.div
+            layout
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            style={{ textAlign: align }}
+            className="space-y-2"
+          >
+            <motion.h4 layout className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              {language === 'zh' ? '实时预览效果' : 'Real-time Preview'}
+            </motion.h4>
+            
+            <motion.div layout className="space-y-1.5">
+              {listType === 'none' ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {language === 'zh' 
+                    ? '点击上方的对齐按钮或列表按钮，观察此段文字的变化。我们采用了全新的渲染逻辑，确保排版整洁无空行。' 
+                    : 'Click the buttons above to see the magic. Our new rendering logic ensures a clean layout with no extra vertical space.'}
+                </p>
+              ) : (
+                <div className={`text-xs text-slate-500 dark:text-slate-400 space-y-1 ${align === 'center' ? 'flex flex-col items-center' : align === 'right' ? 'flex flex-col items-end' : ''}`}>
+                  {[1, 2, 3].map((i) => (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      key={i} 
+                      className="flex items-center gap-2"
+                    >
+                      <span className="font-bold text-blue-500">{listType === 'bullet' ? '•' : `${i}.`}</span>
+                      <span>{language === 'zh' ? `这是第 ${i} 个列表项目` : `List item number ${i}`}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoManualInput = () => {
+  const { language } = useStore();
+  const [val, setVal] = useState(20);
+
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '手动输入参数演示' : 'Manual Input Demo'}
+      </div>
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-4">
+        <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+          {language === 'zh' ? '点击数值即可精确输入，左右拖拽图标仍可快速调节' : 'Click the value to type precisely, or drag the icon to adjust quickly'}
+        </p>
+        <div className="flex justify-center">
+           <DraggableValue 
+             label={language === 'zh' ? '外边距' : 'Margin'}
+             value={val} 
+             onChange={setVal}
+             icon={<Maximize2 size={14} />}
+           />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoImageModes = () => {
+  const { language } = useStore();
+  const [mode, setMode] = useState<'cover' | 'contain' | 'none' | 'fill'>('cover');
+  
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '图片编辑模式演示' : 'Image Editing Modes Demo'}
+      </div>
+
+      <div className="flex flex-col gap-6 items-center">
+        {/* Image Container Mock */}
+        <div className="w-48 h-48 bg-white dark:bg-black/40 rounded-2xl border-2 border-blue-500/30 overflow-hidden relative group shadow-2xl">
+           <motion.div 
+             layout
+             className="w-full h-full relative"
+           >
+              <img 
+                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" 
+                alt="Demo"
+                className={`w-full h-full transition-all duration-500 ${
+                  mode === 'cover' ? 'object-cover' : 
+                  mode === 'contain' ? 'object-contain' : 
+                  mode === 'fill' ? 'object-fill' : 
+                  'object-none scale-150'
+                }`}
+              />
+              
+              {/* Overlay Grid for Crop Mode */}
+              {mode === 'none' && (
+                <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none">
+                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                    {[...Array(9)].map((_, i) => (
+                      <div key={i} className="border-[0.5px] border-blue-500/30" />
+                    ))}
+                  </div>
+                </div>
+              )}
+           </motion.div>
+
+           {/* Toolbar Mock */}
+           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/90 backdrop-blur-md px-2 py-1.5 rounded-xl border border-black/10 shadow-xl flex items-center gap-1">
+              <button onClick={() => setMode('cover')} className={`p-1.5 rounded-lg ${mode === 'cover' ? 'bg-blue-500 text-white' : 'text-slate-400'}`}><Square size={14} /></button>
+              <button onClick={() => setMode('contain')} className={`p-1.5 rounded-lg ${mode === 'contain' ? 'bg-blue-500 text-white' : 'text-slate-400'}`}><Maximize2 size={14} /></button>
+              <button onClick={() => setMode('none')} className={`p-1.5 rounded-lg ${mode === 'none' ? 'bg-blue-500 text-white' : 'text-slate-400'}`}><Crop size={14} /></button>
+              <button onClick={() => setMode('fill')} className={`p-1.5 rounded-lg ${mode === 'fill' ? 'bg-blue-500 text-white' : 'text-slate-400'}`}><StretchHorizontal size={14} /></button>
+           </div>
+        </div>
+
+        <div className="text-center space-y-1">
+           <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
+             {mode === 'cover' ? (language === 'zh' ? '填充 (Fill)' : 'Fill') :
+              mode === 'contain' ? (language === 'zh' ? '等比缩放' : 'Fit') :
+              mode === 'none' ? (language === 'zh' ? '裁切 (Crop)' : 'Crop') :
+              (language === 'zh' ? '拉伸 (Stretch)' : 'Stretch')}
+           </div>
+           <p className="text-[10px] text-slate-400 max-w-[200px]">
+             {mode === 'none' 
+               ? (language === 'zh' ? '借鉴 Figma 设计，裁切模式可自由调整蒙版而不改变图片比例。' : 'Like Figma, Crop mode lets you adjust the mask without scaling the image.')
+               : (language === 'zh' ? '快速切换不同展示比例，满足各种排版需求。' : 'Quickly switch between ratios for any layout need.')}
+           </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoImageSnapping = () => {
+  const { language } = useStore();
+  const [isNear, setIsNear] = useState(false);
+  const x = useMotionValue(0);
+  const controls = useAnimation();
+  
+  const handleDrag = () => {
+    const currentX = x.get();
+    if (Math.abs(currentX) < 15) {
+      setIsNear(true);
+    } else {
+      setIsNear(false);
+    }
+  };
+
+  const handleDragEnd = () => {
+    const currentX = x.get();
+    if (Math.abs(currentX) < 15) {
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 30 } });
+      setIsNear(true);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '图片智能居中吸附演示' : 'Smart Image Snapping Demo'}
+      </div>
+
+      <div className="h-48 bg-white dark:bg-[#151515] rounded-2xl border border-black/5 dark:border-white/10 relative overflow-hidden flex items-center justify-center shadow-xl">
+        {/* Center Line */}
+        <div className={`absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 transition-opacity duration-300 ${isNear ? 'bg-blue-500 opacity-100' : 'bg-slate-200 dark:bg-white/10 opacity-40'}`} />
+        
+        {/* Draggable Mockup */}
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: -120, right: 120 }}
+          style={{ x }}
+          animate={controls}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          className="relative group cursor-grab active:cursor-grabbing"
+        >
+          <div className={`w-24 h-24 rounded-xl border-2 transition-colors duration-300 flex flex-col items-center justify-center gap-2 ${isNear ? 'bg-blue-500/10 border-blue-500 shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 shadow-sm'}`}>
+            <ImageIcon size={24} className={isNear ? 'text-blue-500' : 'text-slate-300'} />
+            <div className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${isNear ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              {isNear ? 'SNAPPED' : 'DRAG ME'}
+            </div>
+            
+            {/* Mouse Pointer Mock */}
+            {!isNear && (
+              <motion.div 
+                className="absolute -top-4 -left-4 text-slate-900 dark:text-white drop-shadow-md pointer-events-none"
+                initial={{ opacity: 1 }}
+                animate={{ x: [0, 10, 0], y: [0, 5, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <MousePointer2 size={16} fill="currentColor" />
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+        
+        {/* Hint text */}
+        <div className="absolute bottom-4 left-0 right-0 text-center">
+           <AnimatePresence mode="wait">
+             {isNear ? (
+               <motion.span key="s" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[10px] font-bold text-blue-500">
+                 {language === 'zh' ? '已自动吸附至中心' : 'Snapped to center'}
+               </motion.span>
+             ) : (
+               <motion.span key="d" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] text-slate-400">
+                 {language === 'zh' ? '请尝试左右拖动图片靠近中心线' : 'Try dragging the image near the center line'}
+               </motion.span>
+             )}
+           </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DemoSupportFlow = () => {
+  const { language } = useStore();
+  const t = useTranslation();
+  const [showTip, setShowTip] = useState(true);
+  const [selectedAmount, setSelectedAmount] = useState<5 | 15 | null>(null);
+
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="text-xs font-bold text-slate-400 uppercase text-center mb-2">
+        {language === 'zh' ? '赞赏流程演示' : 'Support Flow Demo'}
+      </div>
+      
+      <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl space-y-6">
+        {/* Step 1: Tip & Entrance */}
+        {!selectedAmount && (
+          <div className="space-y-6">
+            <div className="relative h-24 bg-slate-50 dark:bg-black/20 rounded-2xl border border-dashed border-black/10 dark:border-white/10 flex items-center justify-center">
+            <div className="flex items-center gap-1 p-1.5 bg-white/50 dark:bg-black/20 rounded-full border border-black/5 dark:border-white/10">
+              <div className="relative">
+                <div className="p-1.5 bg-white dark:bg-white/5 rounded-full border border-black/5 dark:border-white/10 text-blue-500 shadow-sm">
+                  <Info size={16} />
+                </div>
+                
+                <AnimatePresence>
+                  {showTip && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, y: 0 }}
+                      animate={{ opacity: 1, scale: 1, y: 10 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 0 }}
+                      className="absolute top-full right-0 whitespace-nowrap z-10"
+                    >
+                      <div className="bg-orange-400/85 dark:bg-orange-500/80 backdrop-blur-md text-white px-3 py-1.5 rounded-lg shadow-lg text-[9px] font-bold flex items-center gap-2 border border-white/20">
+                        <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                        {language === 'zh' ? '欢迎打赏，老板大气，老板永远不死' : 'Support the author!'}
+                        <button onClick={() => setShowTip(false)} className="hover:bg-white/20 rounded-full p-0.5">
+                          <X size={10} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="p-1.5 text-slate-400 opacity-40">
+                <Github size={16} />
+              </div>
+              <div className="p-1.5 text-slate-400 opacity-40">
+                <Languages size={16} />
+              </div>
+              <div className="p-1.5 text-slate-400 opacity-40">
+                <Sun size={16} />
+              </div>
+            </div>
+          </div>
+
+            <div className="space-y-3">
+              <p className="text-[10px] text-slate-400 text-center">
+                {language === 'zh' ? '点击下方按钮进入打赏流程' : 'Click the button below to support'}
+              </p>
+              <button
+                onClick={() => setSelectedAmount(null)}
+                className="w-full p-3 bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 dark:border-red-500/30 rounded-xl flex items-center justify-center gap-2 text-red-600 dark:text-red-400 text-xs font-bold transition-all hover:bg-red-500/20"
+              >
+                <ThumbsUp size={14} />
+                <span>{t.supportMe}</span>
+              </button>
+            </div>
+
+            {/* Support Selection Panel (Simplified) */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {[
+                { amount: 5 as const, label: t.fiveRMB, img: 'assets/support/options/5rmb.png' },
+                { amount: 15 as const, label: t.fifteenRMB, img: 'assets/support/options/15rmb.png' }
+              ].map((item) => (
+                <button
+                  key={item.amount}
+                  onClick={() => setSelectedAmount(item.amount)}
+                  className="aspect-square relative group overflow-hidden rounded-xl border border-black/5 dark:border-white/10 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                >
+                  <img 
+                    src={item.img} 
+                    alt={item.label}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/200x200/fee2e2/dc2626?text=${item.label}`;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-2">
+                    <span className="text-white text-[10px] font-bold">{item.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: QR Codes */}
+        {selectedAmount && (
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                {selectedAmount === 5 ? t.fiveRMB : t.fifteenRMB} {t.supportAuthor}
+              </h4>
+              <button 
+                onClick={() => setSelectedAmount(null)}
+                className="text-[10px] text-blue-500 hover:underline"
+              >
+                {language === 'zh' ? '返回' : 'Back'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[9px] font-bold text-blue-500">{t.alipay}</span>
+                <div className="p-2 bg-white rounded-xl border border-black/5 shadow-inner">
+                  <img 
+                    src={`assets/support/qrcodes/${selectedAmount}/alipay.jpg`} 
+                    alt="Alipay"
+                    className="w-24 h-24 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/200x200/00a1e9/ffffff?text=Alipay`;
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[9px] font-bold text-green-500">{t.wechat}</span>
+                <div className="p-2 bg-white rounded-xl border border-black/5 shadow-inner">
+                  <img 
+                    src={`assets/support/qrcodes/${selectedAmount}/wechat.jpg`} 
+                    alt="WeChat"
+                    className="w-24 h-24 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/200x200/07c160/ffffff?text=WeChat`;
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-[9px] text-slate-400 text-center italic">
+              {language === 'zh' ? '此演示即为真实打赏入口，感谢支持！' : 'This demo is a real support entry, thanks!'}
+            </p>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const DemoProgressiveDisclosure = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { language } = useStore();
   return (
@@ -634,6 +1535,7 @@ const DraggableValue = ({
   onChange, 
   min = 0, 
   max = 100, 
+  step = 1,
   icon, 
   label 
 }: { 
@@ -641,20 +1543,34 @@ const DraggableValue = ({
   onChange: (v: number) => void, 
   min?: number, 
   max?: number, 
+  step?: number,
   icon: React.ReactNode, 
   label: string 
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(value.toString());
+  useEffect(() => {
+    setInputValue(value.toString());
+  }, [value]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isEditing) return;
     setIsDragging(true);
     const startX = e.clientX;
     const startValue = value;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
-      const newValue = Math.min(max, Math.max(min, startValue + Math.round(deltaX / 5)));
-      onChange(newValue);
+      const sensitivity = step < 1 ? 0.01 : 0.5;
+      const change = deltaX * sensitivity;
+      const rawValue = startValue + change;
+      
+      const steppedValue = Math.round(rawValue / step) * step;
+      const newValue = Math.max(min, Math.min(max, steppedValue));
+      
+      const finalValue = parseFloat(newValue.toFixed(step < 1 ? 2 : 0));
+      onChange(finalValue);
     };
 
     const handleMouseUp = () => {
@@ -667,6 +1583,17 @@ const DraggableValue = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleInputBlur = () => {
+    setIsEditing(false);
+    let newValue = parseFloat(inputValue);
+    if (isNaN(newValue)) {
+      setInputValue(value.toString());
+      return;
+    }
+    newValue = Math.max(min, Math.min(max, newValue));
+    onChange(newValue);
+  };
+
   return (
     <div className="space-y-1.5 flex-1 min-w-[120px]">
       <div className="flex items-center justify-between px-0.5">
@@ -674,13 +1601,29 @@ const DraggableValue = ({
       </div>
       <div 
         onMouseDown={handleMouseDown}
-        className={`flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl cursor-ew-resize select-none transition-all ${isDragging ? 'border-blue-500 shadow-sm' : 'hover:border-black/20 dark:hover:border-white/20'}`}
+        className={`flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl cursor-ew-resize select-none transition-all ${isDragging ? 'border-blue-500 shadow-sm' : 'hover:border-black/20 dark:hover:border-white/20'} ${isEditing ? 'ring-2 ring-blue-500 bg-white dark:bg-black/20' : ''}`}
       >
         <div className="text-slate-400 shrink-0">
           {icon}
         </div>
-        <div className="flex-1 text-sm font-mono font-bold text-slate-700 dark:text-slate-200">
-          {value}
+        <div 
+          className="flex-1 text-right text-sm font-mono font-bold text-slate-700 dark:text-slate-200"
+          onClick={() => setIsEditing(true)}
+        >
+          {isEditing ? (
+            <input
+              autoFocus
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onBlur={handleInputBlur}
+              onKeyDown={(e) => e.key === 'Enter' && handleInputBlur()}
+              className="w-full bg-transparent outline-none text-blue-500 text-right"
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+          ) : (
+            value
+          )}
         </div>
       </div>
     </div>
@@ -825,7 +1768,7 @@ const DemoPaddingCustomization = () => {
 
 const DemoFooterCustomization = () => {
   const { language } = useStore();
-  const [watermark, setWatermark] = useState({ fontSize: 10, opacity: 0.5, position: 'center' as 'left' | 'center' | 'right', color: '' });
+  const [watermark, setWatermark] = useState({ fontSize: 10, opacity: 0.5, position: 'center' as 'left' | 'center' | 'right', color: '', uppercase: true });
   const [pageNumber, setPageNumber] = useState({ fontSize: 10, opacity: 0.5, position: 'center' as 'left' | 'center' | 'right', color: '' });
   const [activeTab, setActiveTab] = useState<'watermark' | 'pageNumber'>('pageNumber');
 
@@ -935,6 +1878,18 @@ const DemoFooterCustomization = () => {
               ))}
             </div>
           </div>
+
+          {activeTab === 'watermark' && (
+            <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">{language === 'zh' ? '全大写' : 'Uppercase'}</span>
+              <button 
+                onClick={() => setWatermark({ ...watermark, uppercase: !watermark.uppercase })}
+                className={`w-8 h-4 rounded-full transition-colors relative ${watermark.uppercase ? 'bg-blue-500' : 'bg-black/10 dark:bg-white/10'}`}
+              >
+                <div className={`w-2.5 h-2.5 rounded-full bg-white absolute top-0.75 transition-all ${watermark.uppercase ? 'left-4.5' : 'left-1'}`} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Real-time Preview Area */}
@@ -950,7 +1905,8 @@ const DemoFooterCustomization = () => {
                 transform: watermark.position === 'center' ? 'translateX(-50%)' : 'none',
                 fontSize: `${watermark.fontSize}px`,
                 opacity: watermark.opacity,
-                color: watermark.color || 'currentColor'
+                color: watermark.color || 'currentColor',
+                textTransform: watermark.uppercase ? 'uppercase' : 'none'
               }}
             >
               MD2DESIGN
