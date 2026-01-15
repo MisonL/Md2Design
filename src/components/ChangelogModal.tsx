@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { useState, useEffect, useMemo, useRef } from 'react';
 
 interface ChangelogModalProps {
@@ -973,7 +974,24 @@ const DemoBlankLine = () => {
             <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-xl p-3 text-xs overflow-y-auto custom-scrollbar border border-black/5 dark:border-white/5">
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm, remarkBreaks]} 
-                rehypePlugins={[rehypeRaw]}
+                rehypePlugins={[
+                  rehypeRaw,
+                  [rehypeSanitize, {
+                    ...defaultSchema,
+                    tagNames: [
+                      ...(defaultSchema.tagNames || []),
+                      'u', 'center', 'strike', 'font', 'big', 'small'
+                    ],
+                    attributes: {
+                      ...(defaultSchema.attributes || {}),
+                      '*': [
+                        ...(defaultSchema.attributes?.['*'] || []),
+                        'className', 'class', 'style', 'id'
+                      ],
+                      'font': ['color', 'size', 'face']
+                    }
+                  }]
+                ]}
                 components={{
                   p: ({...props}) => <p className="mb-4 last:mb-0" {...props} />
                 }}

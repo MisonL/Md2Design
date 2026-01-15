@@ -459,7 +459,7 @@ const Card = memo(({
                         ...(defaultSchema.attributes || {}),
                         '*': [
                           ...(defaultSchema.attributes?.['*'] || []),
-                          'className', 'style', 'id'
+                          'className', 'class', 'style', 'id'
                         ],
                         'font': ['color', 'size', 'face']
                       }

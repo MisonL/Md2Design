@@ -107,17 +107,14 @@ export const TopBar = () => {
   const [exportMode, setExportMode] = useState<'single' | 'multiple'>('multiple');
   const [exportTarget, setExportTarget] = useState<'folder' | 'zip'>('zip');
   const [folderName, setFolderName] = useState('cards-export'); 
-  const [namingMode, setNamingMode] = useState<'system' | 'custom'>('system');
-  const [namingParts, setNamingParts] = useState<('prefix' | 'date' | 'custom' | 'number')[]>(['prefix', 'date', 'custom', 'number']);
-  const [namingConfigs, setNamingConfigs] = useState({
-    prefix: 'Md2Design',
-    custom: 'MyCard',
-    includeTime: true,
-    dateFormat: 'dateFormatFull' as 'dateFormatFull' | 'dateFormatShort' | 'dateFormatMDY' | 'dateFormatDMY' | 'dateFormatYMD',
-    numberType: 'arabic' as 'arabic' | 'chinese',
-    numberOrder: 'asc' as 'asc' | 'desc',
-    zeroStart: false,
-  });
+  
+  // Naming state from store (synced with useExport)
+  const namingMode = useStore((state) => state.namingMode);
+  const setNamingMode = useStore((state) => state.setNamingMode);
+  const namingParts = useStore((state) => state.namingParts);
+  const setNamingParts = useStore((state) => state.setNamingParts);
+  const namingConfigs = useStore((state) => state.namingConfigs);
+  const setNamingConfigs = useStore((state) => state.setNamingConfigs);
 
   const generateFileName = (index: number, total: number) => {
     const now = new Date();
