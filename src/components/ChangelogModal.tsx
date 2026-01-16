@@ -986,7 +986,8 @@ const DemoBlankLine = () => {
                       ...(defaultSchema.attributes || {}),
                       '*': [
                         ...(defaultSchema.attributes?.['*'] || []),
-                        'className', 'class', 'style', 'id'
+                        'className', 'class', 'id'
+                        // 'style' removed for security
                       ],
                       'font': ['color', 'size', 'face']
                     }

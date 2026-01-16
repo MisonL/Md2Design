@@ -267,10 +267,14 @@ export const Editor = () => {
     
     const blockContent = markdown.substring(lineStart, lineEnd);
     
-    // Precise regex to match alignment tags and capture their content
-    // This matches <tag style="...text-align: (left|center|right)...">content</tag>
-    const regex = /<(span|p|div)\s+style="[^"]*text-align:\s*(left|center|right);?[^"]*">(.*?)<\/\1>/si;
-    const match = blockContent.match(regex);
+    // Match class-based alignment tags: <span class="align-xxx">content</span>
+    // Also match legacy style-based for backwards compatibility during transition
+    const classRegex = /<(span|div)\s+class="align-(left|center|right)">(.*?)<\/\1>/si;
+    const styleRegex = /<(span|p|div)\s+style="[^"]*text-align:\s*(left|center|right);?[^"]*">(.*?)<\/\1>/si;
+    
+    const classMatch = blockContent.match(classRegex);
+    const styleMatch = blockContent.match(styleRegex);
+    const match = classMatch || styleMatch;
 
     if (match) {
       const currentAlign = match[2];
@@ -285,8 +289,8 @@ export const Editor = () => {
           textarea.setSelectionRange(lineStart, lineStart + content.length);
         }, 0);
       } else {
-        // Switch alignment: replace the existing tag with a clean new one
-        const wrapped = `<span style="display:block;text-align:${align}">${content}</span>`;
+        // Switch alignment: use class-based approach (secure, no inline styles)
+        const wrapped = `<span class="align-${align}">${content}</span>`;
         const newText = markdown.substring(0, lineStart) + wrapped + markdown.substring(lineEnd);
         setMarkdown(newText);
         setTimeout(() => {
@@ -295,8 +299,8 @@ export const Editor = () => {
         }, 0);
       }
     } else {
-      // Toggle on: wrap the whole line
-      const wrapped = `<span style="display:block;text-align:${align}">${blockContent}</span>`;
+      // Toggle on: wrap with class-based alignment
+      const wrapped = `<span class="align-${align}">${blockContent}</span>`;
       const newText = markdown.substring(0, lineStart) + wrapped + markdown.substring(lineEnd);
       setMarkdown(newText);
       setTimeout(() => {

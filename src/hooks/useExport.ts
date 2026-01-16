@@ -11,14 +11,16 @@ interface ExportOptions {
     exportMode: 'single' | 'multiple';
     exportTarget: 'zip' | 'folder' | 'direct';
     folderName: string;
+    isOpen?: boolean; // For lazy size estimation - only calculate when modal is open
 }
 
 export const useExport = (options: ExportOptions) => {
-    const { format, scale, exportMode, exportTarget, folderName } = options;
+    const { format, scale, exportMode, exportTarget, folderName, isOpen = false } = options;
     const t = useTranslation();
     const [isExporting, setIsExporting] = useState(false);
     const [progress, setProgress] = useState(0);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [exportError, setExportError] = useState<string | null>(null);
     const [previewSize, setPreviewSize] = useState<{ single: string, total: string }>({ single: '-', total: '-' });
 
     const namingMode = useStore((state) => state.namingMode);
@@ -73,8 +75,19 @@ export const useExport = (options: ExportOptions) => {
         return parts.filter(Boolean).join('_');
     };
 
-    // Calculate size estimation
+    // Sanitize filename to remove illegal characters
+    const sanitizeFileName = (name: string): string => {
+        return name.replace(/[/:*?"<>|\\]/g, '_');
+    };
+
+    // Calculate size estimation - lazy: only when modal is open
     useEffect(() => {
+        // Skip calculation if modal is not open (performance optimization)
+        if (!isOpen) {
+            setPreviewSize({ single: '-', total: '-' });
+            return;
+        }
+
         const calculateSize = async () => {
             const firstCard = document.querySelector('[id^="card-"]') as HTMLElement;
             if (!firstCard) return;
@@ -112,7 +125,7 @@ export const useExport = (options: ExportOptions) => {
 
         const timer = setTimeout(calculateSize, 500);
         return () => clearTimeout(timer);
-    }, [format, scale, t.calculating]);
+    }, [format, scale, t.calculating, isOpen]);
 
     const handleExport = async () => {
         setIsExporting(true);
@@ -125,13 +138,13 @@ export const useExport = (options: ExportOptions) => {
             };
             
             let completed = 0;
-            const total = cards.length;
+            const total = cards.length || 1; // Prevent NaN when no cards
             const updateProgress = () => {
                 completed++;
-                setProgress(Math.round((completed / total) * 100));
+                setProgress(total > 0 ? Math.round((completed / total) * 100) : 0);
             };
 
-            const generateBlob = async (card: HTMLElement) => {
+            const generateBlob = async (card: HTMLElement): Promise<Blob | null> => {
                 const images = Array.from(card.querySelectorAll('img'));
                 const originalSrcs = new Map<HTMLImageElement, string>();
 
@@ -162,10 +175,16 @@ export const useExport = (options: ExportOptions) => {
                         skipAutoScale: true
                     };
 
-                    if (format === 'png') {
-                        dataUrl = await toPng(card, currentOptions);
-                    } else {
-                        dataUrl = await toJpeg(card, { ...currentOptions, quality: 0.9 });
+                    try {
+                        if (format === 'png') {
+                            dataUrl = await toPng(card, currentOptions);
+                        } else {
+                            dataUrl = await toJpeg(card, { ...currentOptions, quality: 0.9 });
+                        }
+                    } catch (renderError) {
+                        console.error('Export render failed:', renderError);
+                        // Return null to signal failure - caller should handle
+                        return null;
                     }
                     const res = await fetch(dataUrl);
                     return await res.blob();
@@ -180,17 +199,27 @@ export const useExport = (options: ExportOptions) => {
                 const runZipExport = async () => {
                     const zip = new JSZip();
                     const chunkSize = 3;
+                    let hasError = false;
                     for (let i = 0; i < cards.length; i += chunkSize) {
                         const chunk = cards.slice(i, i + chunkSize);
                         await Promise.all(chunk.map(async (card, idx) => {
                             const globalIdx = i + idx;
                             const blob = await generateBlob(card);
-                            zip.file(`${generateFileName(globalIdx, cards.length)}.${format}`, blob);
+                            if (blob === null) {
+                                hasError = true;
+                                return; // Skip this card but continue
+                            }
+                            const fileName = sanitizeFileName(generateFileName(globalIdx, cards.length));
+                            zip.file(`${fileName}.${format}`, blob);
                             updateProgress();
                         }));
                     }
+                    if (hasError) {
+                        setExportError(t.corsError || 'Some images could not be exported due to CORS restrictions.');
+                    }
                     const content = await zip.generateAsync({ type: "blob" });
-                    saveAs(content, `${folderName || 'cards-export'}.zip`);
+                    const zipName = sanitizeFileName(folderName || 'cards-export');
+                    saveAs(content, `${zipName}.zip`);
                 };
 
                 if (exportTarget === 'folder' && 'showDirectoryPicker' in window) {
@@ -205,8 +234,13 @@ export const useExport = (options: ExportOptions) => {
                         const CONCURRENCY = 3;
                         const tasks = cards.map((card, i) => async () => {
                             const blob = await generateBlob(card);
-                            const fileName = `${generateFileName(i, cards.length)}.${format}`;
-                            const fileHandle = await targetHandle.getFileHandle(fileName, { create: true });
+                            if (blob === null) {
+                                setExportError(t.corsError || 'Some images could not be exported due to CORS restrictions.');
+                                updateProgress();
+                                return;
+                            }
+                            const fileName = sanitizeFileName(generateFileName(i, cards.length));
+                            const fileHandle = await targetHandle.getFileHandle(`${fileName}.${format}`, { create: true });
                             const writable = await fileHandle.createWritable();
                             await writable.write(blob);
                             await writable.close();
@@ -239,7 +273,12 @@ export const useExport = (options: ExportOptions) => {
                 for (let i = 0; i < cards.length; i++) {
                     const card = cards[i];
                     const blob = await generateBlob(card);
-                    saveAs(blob, `${generateFileName(i, cards.length)}.${format}`);
+                    if (blob === null) {
+                        setExportError(t.corsError || 'Some images could not be exported due to CORS restrictions.');
+                        continue;
+                    }
+                    const fileName = sanitizeFileName(generateFileName(i, cards.length));
+                    saveAs(blob, `${fileName}.${format}`);
                     updateProgress();
                     await new Promise(resolve => setTimeout(resolve, 200));
                 }
@@ -258,7 +297,9 @@ export const useExport = (options: ExportOptions) => {
         isExporting,
         progress,
         showSuccess,
+        exportError,
         previewSize,
-        handleExport
+        handleExport,
+        clearError: () => setExportError(null)
     };
 };

@@ -167,7 +167,9 @@ export const TopBar = () => {
   const { 
     isExporting, 
     progress, 
-    showSuccess, 
+    showSuccess,
+    exportError,
+    clearError,
     previewSize, 
     handleExport 
   } = useExport({
@@ -175,7 +177,8 @@ export const TopBar = () => {
     scale,
     exportMode,
     exportTarget,
-    folderName
+    folderName,
+    isOpen: showExport  // Lazy size estimation - only calculate when modal is open
   });
 
   const onExportClick = async () => {
@@ -935,6 +938,46 @@ export const TopBar = () => {
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.exportSuccess}</h3>
                 <p className="text-xs text-slate-500 dark:text-white/60">{t.exportSuccessMsg}</p>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Export Error Toast */}
+      <AnimatePresence>
+        {exportError && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-70 flex items-center justify-center pointer-events-none"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.8, y: 20, opacity: 0 }}
+              className="bg-white dark:bg-[#1a1a1a] border border-red-500/30 dark:border-red-400/30 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 pointer-events-auto max-w-md"
+            >
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.export}</h3>
+                <p className="text-xs text-slate-500 dark:text-white/60">{exportError}</p>
+              </div>
+              <button 
+                onClick={clearError}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white/80 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </motion.div>
           </motion.div>
         )}

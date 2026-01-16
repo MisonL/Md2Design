@@ -23,7 +23,15 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Ctrl+Z or Cmd+Z
+      // Skip if user is in an input field - let native undo work
+      const activeEl = document.activeElement;
+      const isInInputField = activeEl?.tagName === 'INPUT' || 
+                             activeEl?.tagName === 'TEXTAREA' ||
+                             (activeEl as HTMLElement)?.isContentEditable;
+      
+      if (isInInputField) return;
+
+      // Check for Ctrl+Z or Cmd+Z (undo)
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         if (e.shiftKey) {
           e.preventDefault();
@@ -32,6 +40,12 @@ function App() {
           e.preventDefault();
           undo();
         }
+      }
+      
+      // Check for Ctrl+Y (Windows redo - Mac uses Cmd+Shift+Z above)
+      if (e.ctrlKey && !e.metaKey && e.key === 'y') {
+        e.preventDefault();
+        redo();
       }
     };
 

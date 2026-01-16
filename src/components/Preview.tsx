@@ -115,8 +115,20 @@ const Card = memo(({
     return () => clearTimeout(timer);
   }, [content, images, index, updateCardImage, width, height, cardStyle]);
 
-  // 修复 Markdown 空行渲染问题：使用更通用的方式处理空行，确保连续换行被保留
-  const processedContent = content.replace(/\n\s*\n/g, '\n\n&zwnj;\n\n');
+  // 修复 Markdown 空行渲染问题：跳过代码块，仅对普通文本执行空行替换
+  const processedContent = useMemo(() => {
+    // Split by code blocks (fenced and inline)
+    // When using split with a capture group, matched parts appear at odd indices
+    const codeBlockRegex = /(```[\s\S]*?```|`[^`]+`)/g;
+    const parts = content.split(codeBlockRegex);
+    
+    return parts.map((part, i) => {
+      // Odd indices are code blocks (matched by capture group) - preserve as-is
+      if (i % 2 === 1) return part;
+      // Even indices are normal content - apply blank line fix
+      return part.replace(/\n\s*\n/g, '\n\n\u200C\n\n');
+    }).join('');
+  }, [content]);
 
   const renderOuterBackground = () => {
     if (!cardStyle.enableBackground) return null;
@@ -442,6 +454,12 @@ const Card = memo(({
               }}
               >
                 {/* Custom CSS Injection */}
+                {/* Alignment class styles for secure text alignment */}
+                <style dangerouslySetInnerHTML={{ __html: `
+                  .align-left { display: block; text-align: left; }
+                  .align-center { display: block; text-align: center; }
+                  .align-right { display: block; text-align: right; }
+                ` }} />
                 {cardStyle.customCSS && (
                   <style dangerouslySetInnerHTML={{ __html: cardStyle.customCSS }} />
                 )}
@@ -459,7 +477,8 @@ const Card = memo(({
                         ...(defaultSchema.attributes || {}),
                         '*': [
                           ...(defaultSchema.attributes?.['*'] || []),
-                          'className', 'class', 'style', 'id'
+                          'className', 'class', 'id'
+                          // 'style' removed for security - prevents CSS injection
                         ],
                         'font': ['color', 'size', 'face']
                       }
@@ -772,20 +791,30 @@ export const Preview = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const { width, height } = getCardDimensions(cardStyle);
+  
+  // Window size state for responsive scaling
+  const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+  
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const autoScale = useMemo(() => {
-    const isDesktop = window.innerWidth >= 1024;
+    const isDesktop = windowSize.w >= 1024;
     const editorSpace = (isDesktop && isEditorOpen) ? 448 : 40;
     const sidebarSpace = (isDesktop && isSidebarOpen) ? 398 : 40;
     const horizontalOccupied = editorSpace + sidebarSpace;
     const verticalSpace = 180;
-    const availableWidth = Math.max(300, window.innerWidth - horizontalOccupied);
-    const availableHeight = Math.max(300, window.innerHeight - verticalSpace);
+    const availableWidth = Math.max(300, windowSize.w - horizontalOccupied);
+    const availableHeight = Math.max(300, windowSize.h - verticalSpace);
     const wScale = availableWidth / width;
     const hScale = availableHeight / height;
     let s = cardStyle.autoHeight ? Math.min(wScale, 1) : Math.min(wScale, hScale, 1);
     if (s < 0.2) s = 0.2;
     return s;
-  }, [width, height, isEditorOpen, isSidebarOpen, cardStyle.autoHeight]);
+  }, [width, height, isEditorOpen, isSidebarOpen, cardStyle.autoHeight, windowSize]);
 
   const scale = previewZoom > 0 ? previewZoom : autoScale;
 

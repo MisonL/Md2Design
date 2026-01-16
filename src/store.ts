@@ -498,17 +498,31 @@ export const useStore = create<AppState>()(
       } else {
         const { x, y, blur, spread, color, opacity } = config;
         
-        // Convert hex color to rgb for opacity handling if needed, 
-        // but easier to just use hex and assume browser handles or user provides rgba.
-        // Actually user provides hex color usually. We need to apply opacity.
-        // Let's assume color is HEX.
-  const [r, g, b] = color.startsWith('#') 
-    ? (color.length === 4 
-        ? [parseInt(color[1] + color[1], 16), parseInt(color[2] + color[2], 16), parseInt(color[3] + color[3], 16)]
-        : [parseInt(color.substring(1, 3), 16), parseInt(color.substring(3, 5), 16), parseInt(color.substring(5, 7), 16)])
-    : [0, 0, 0];
-  
-  newStyle.shadow = `${x}px ${y}px ${blur}px ${spread}px rgba(${r}, ${g}, ${b}, ${opacity})`;
+        // Parse color - support hex, rgb(), and rgba() formats
+        let r = 0, g = 0, b = 0;
+        
+        if (color.startsWith('#')) {
+          // Hex color
+          if (color.length === 4) {
+            r = parseInt(color[1] + color[1], 16);
+            g = parseInt(color[2] + color[2], 16);
+            b = parseInt(color[3] + color[3], 16);
+          } else {
+            r = parseInt(color.substring(1, 3), 16);
+            g = parseInt(color.substring(3, 5), 16);
+            b = parseInt(color.substring(5, 7), 16);
+          }
+        } else if (color.startsWith('rgb')) {
+          // rgb() or rgba() - extract RGB values, ignore alpha (use our opacity instead)
+          const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+          if (match) {
+            r = parseInt(match[1], 10);
+            g = parseInt(match[2], 10);
+            b = parseInt(match[3], 10);
+          }
+        }
+        
+        newStyle.shadow = `${x}px ${y}px ${blur}px ${spread}px rgba(${r}, ${g}, ${b}, ${opacity})`;
       }
     }
 
@@ -701,20 +715,46 @@ export const useStore = create<AppState>()(
         }
         return state;
       },
-      partialize: (state) => ({
-        theme: state.theme,
-        language: state.language,
-        markdown: state.markdown,
-        cardStyle: state.cardStyle,
-        cardImages: state.cardImages,
-        activeCardIndex: state.activeCardIndex,
-        presets: state.presets,
-        isEditorOpen: state.isEditorOpen,
-        isSidebarOpen: state.isSidebarOpen,
-        namingMode: state.namingMode,
-        namingParts: state.namingParts,
-        namingConfigs: state.namingConfigs,
-      }),
+      partialize: (state) => {
+        // Deep clone cardStyle to avoid mutating original state
+        const cleanCardStyle = JSON.parse(JSON.stringify(state.cardStyle));
+        // Remove base64 image data to prevent localStorage quota overflow
+        if (cleanCardStyle.backgroundImage && cleanCardStyle.backgroundImage.startsWith('data:')) {
+          cleanCardStyle.backgroundImage = '';
+        }
+        if (cleanCardStyle.cardBackgroundImage && cleanCardStyle.cardBackgroundImage.startsWith('data:')) {
+          cleanCardStyle.cardBackgroundImage = '';
+        }
+        // Clean customFonts with inline base64 URLs
+        if (cleanCardStyle.customFonts) {
+          cleanCardStyle.customFonts = cleanCardStyle.customFonts.filter(
+            (f: { url: string }) => !f.url.startsWith('data:')
+          );
+        }
+
+        // Clean presets containing base64 data
+        const cleanPresets = state.presets.map(preset => {
+          const cleanStyle = JSON.parse(JSON.stringify(preset.style));
+          if (cleanStyle.backgroundImage?.startsWith('data:')) cleanStyle.backgroundImage = '';
+          if (cleanStyle.cardBackgroundImage?.startsWith('data:')) cleanStyle.cardBackgroundImage = '';
+          return { ...preset, style: cleanStyle };
+        });
+
+        return {
+          theme: state.theme,
+          language: state.language,
+          markdown: state.markdown,
+          cardStyle: cleanCardStyle,
+          // cardImages removed - too large for localStorage
+          activeCardIndex: state.activeCardIndex,
+          presets: cleanPresets,
+          isEditorOpen: state.isEditorOpen,
+          isSidebarOpen: state.isSidebarOpen,
+          namingMode: state.namingMode,
+          namingParts: state.namingParts,
+          namingConfigs: state.namingConfigs,
+        };
+      },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         if (state.theme === 'dark') {
@@ -726,10 +766,10 @@ export const useStore = create<AppState>()(
     }
     ),
     {
-      // Configure Zundo: only track changes to markdown and cardImages
+      // Configure Zundo: only track markdown changes (cardImages removed due to memory impact)
       partialize: (state) => ({ 
-        markdown: state.markdown,
-        cardImages: state.cardImages 
+        markdown: state.markdown
+        // cardImages removed - base64 data causes memory bloat in undo history
       }),
       limit: 100, // Limit history size
     }
